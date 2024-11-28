@@ -46,5 +46,6 @@
 (require 'init-misc)
 (require 'init-completion-at-point)
 (require 'init-completion-minibuffer)
+(require 'init-telescope)
 
 (require 'init-general)

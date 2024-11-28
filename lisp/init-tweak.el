@@ -1,11 +1,15 @@
 ;; Smooth scrolling
 (setq scroll-conservatively 101)
+(pixel-scroll-precision-mode 1)
 
 ;; Silence compiler warnings if using native compilation
 (setq native-comp-async-report-warnings-errors nil)
 
 ;; delete by moving to trash
 (setq delete-by-moving-to-trash t)
+
+;; No backup files
+(setq make-backup-files nil)
 
 ;; Revert Dired and other buffers
 (setq global-auto-revert-non-file-buffers t)

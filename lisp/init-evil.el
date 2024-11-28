@@ -19,16 +19,18 @@
   :config
   (evil-collection-init))
 
-(defun my-evil-escape-inhibit-condition () (interactive)
-  (eq evil-state 'visual))
-
 (use-package evil-escape :ensure t
   :init
   (setq-default evil-escape-key-sequence "jk")
-  (setq evil-escape-inhibit-functions
-        '(my-evil-escape-inhibit-condition))
+  (setq evil-escape-excluded-states '(visual motion))
+  (setq evil-escape-excluded-major-modes '(ibuffer-mode))
   :config
   (evil-escape-mode))
+
+(use-package evil-surround
+  :ensure t
+  :config
+  (global-evil-surround-mode 1))
   
 
 (provide 'init-evil)

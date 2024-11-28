@@ -19,6 +19,17 @@
   (my-leader-def 'normal
     "o c" 'my-edit-configuration
 
-    "b d" 'evil-delete-buffer))
+    "b d" 'evil-delete-buffer
+    "b i" 'ibuffer
+
+    "x f" 'find-file
+    "x e" 'eval-last-sexp
+    "x p f" 'project-find-file
+    "x p g" 'project-find-regexp
+
+    "SPC" 'fzf-git-files
+    "f f" 'fzf-find-file
+    "f w" 'fzf-grep-with-narrowing
+    "f b" 'fzf-switch-buffer))
 
 (provide 'init-general)
