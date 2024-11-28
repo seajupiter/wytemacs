@@ -1,0 +1,13 @@
+# emacs stuff
+*~
+auto-save-list
+elpa
+eln-cache
+persistent-scratch
+.persistent-scratch
+recentf
+projects
+straight
+transient
+tabsession.el 
+
