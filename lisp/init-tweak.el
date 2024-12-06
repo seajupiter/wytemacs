@@ -95,6 +95,9 @@
 ;; Minimum window height
 (setq window-min-height 1)
 
+;; fix resizing
+(setq frame-resize-pixelwise t)
+
 ;; Buffer encoding
 (prefer-coding-system       'utf-8)
 (set-default-coding-systems 'utf-8)
@@ -102,6 +105,9 @@
 (set-keyboard-coding-system 'utf-8)
 (set-language-environment   'utf-8)
 (setq default-buffer-file-coding-system 'utf-8)
+
+;; visual line mode
+(global-visual-line-mode)
 
 ;; Unique buffer names
 (require 'uniquify)
@@ -127,11 +133,17 @@
 (ad-activate 'term-sentinel)
 
 ;; change fringe color
-(defun my-color-fringes () (interactive)
+(defun my/color-fringes () (interactive)
   (set-face-attribute 'fringe nil
                       :foreground (face-foreground 'default)
                       :background (face-background 'default)))
-(my-color-fringes)
+(my/color-fringes)
+
+;; remember recent file
+(recentf-mode 1)
+
+;; better syntax highlight
+(setq font-lock-maximum-decoration t)
 
 
 (provide 'init-tweak)

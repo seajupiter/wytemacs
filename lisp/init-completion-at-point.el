@@ -1,4 +1,5 @@
 (use-package corfu
+  :straight t
   ;; Optional customizations
   :custom
   (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'

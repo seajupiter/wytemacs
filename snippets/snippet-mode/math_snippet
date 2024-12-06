@@ -1,0 +1,10 @@
+# -*- mode: snippet -*-
+# name: Create LaTeX math snippet
+# key: ms
+# --
+# -*- mode: snippet -*-
+# name: $1
+# key: $2
+# group: math
+# --
+$0

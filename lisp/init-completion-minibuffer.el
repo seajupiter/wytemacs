@@ -1,15 +1,17 @@
-(use-package vertico :ensure t
+(use-package vertico
+  :straight t
   :config
   (vertico-mode 1))
 
 (use-package orderless
-  :ensure t
+  :straight t
   :custom
   (completion-styles '(orderless basic))
   (completion-category-overrides '((file (styles basic partial-completion)))))
 
 ;; Enable rich annotations using the Marginalia package
-(use-package marginalia :ensure t
+(use-package marginalia
+  :straight t
   ;; The :init section is always executed.
   :init
   ;; Marginalia must be activated in the :init section of use-package such that

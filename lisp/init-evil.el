@@ -1,25 +1,25 @@
 ;; evil mode
-(straight-use-package '(evil :host github :repo "emacs-evil/evil"))
-
 (use-package evil
+  :straight t
   :init
   (setq evil-want-keybinding nil)
+  (setq evil-undo-system 'undo-redo)
+  (setq evil-want-C-u-scroll t)
   :custom
   (evil-cross-lines t)
   :config (evil-mode t))
 
 (use-package evil-collection
   :after (evil)
-  :straight (evil-collection :type git
-                             :host github
-                             :repo "emacs-evil/evil-collection")
+  :straight t
   :custom
   (evil-collection-setup-minibuffer t)
   (evil-collection-outline-bind-tab-p t)
   :config
   (evil-collection-init))
 
-(use-package evil-escape :ensure t
+(use-package evil-escape
+  :straight t
   :init
   (setq-default evil-escape-key-sequence "jk")
   (setq evil-escape-excluded-states '(visual motion))
@@ -28,7 +28,7 @@
   (evil-escape-mode))
 
 (use-package evil-surround
-  :ensure t
+  :straight t
   :config
   (global-evil-surround-mode 1))
   

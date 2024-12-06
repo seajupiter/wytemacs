@@ -11,3 +11,6 @@ straight
 transient
 tabsession.el 
 projectile-bookmarks.eld
+.local
+eshell
+xenops
