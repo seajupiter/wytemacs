@@ -7,7 +7,8 @@
   :config
   (general-swap-key nil 'motion
     ";" ":")
-  (general-def '(normal motion)
+
+  (general-def '(normal motion visual)
     "H" 'evil-first-non-blank
     "L" 'evil-end-of-line
     "j" 'evil-next-visual-line
@@ -32,7 +33,12 @@
     "SPC" 'consult-fd
     "f f" 'consult-find
     "f w" 'consult-ripgrep
+    "/" 'consult-ripgrep
     "f b" 'consult-buffer
-    "f r" 'recentf))
+    "<" 'consult-buffer
+    "f r" 'recentf)
+
+  (general-def 'insert
+    "C-a" 'copilot-accept-completion))
 
 (provide 'init-general)

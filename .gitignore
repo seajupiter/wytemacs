@@ -14,3 +14,6 @@ projectile-bookmarks.eld
 .local
 eshell
 xenops
+.DS_Store
+.cache
+url

@@ -24,4 +24,13 @@
   :init
   (setq neo-autorefresh t))
 
+(use-package ultra-scroll-mac
+  :straight (ultra-scroll-mac :type git :host github :repo "jdtsmith/ultra-scroll-mac")
+  :if (eq window-system 'mac)
+  :init
+  (setq scroll-conservatively 101 ; important!
+        scroll-margin 0) 
+  :config
+  (ultra-scroll-mac-mode 1))
+
 (provide 'init-misc)

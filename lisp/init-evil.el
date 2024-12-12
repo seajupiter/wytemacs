@@ -22,9 +22,13 @@
   :straight t
   :init
   (setq-default evil-escape-key-sequence "jk")
-  (setq evil-escape-excluded-states '(visual motion))
-  (setq evil-escape-excluded-major-modes '(ibuffer-mode))
+  (setq evil-escape-inhibit-functions '(my/evil-escape-inhibit))
   :config
+  (defun my/evil-escape-inhibit ()
+    (or (evil-visual-state-p)
+        (evil-motion-state-p)
+        (derived-mode-p 'magit-mode)
+        (derived-mode-p 'ibuffer-mode)))
   (evil-escape-mode))
 
 (use-package evil-surround

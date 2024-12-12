@@ -145,5 +145,7 @@
 ;; better syntax highlight
 (setq font-lock-maximum-decoration t)
 
+;; turn on which-key mode
+(which-key-mode)
 
 (provide 'init-tweak)

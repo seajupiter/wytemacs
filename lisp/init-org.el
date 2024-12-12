@@ -13,7 +13,7 @@
   (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.6))
   (setq org-latex-create-formula-image-program 'dvisvgm)
   (let* ((variable-tuple
-          (cond ((x-list-fonts "ETBembo")         '(:font "ETBembo"))
+          (cond ((x-list-fonts "CMU Serif")         '(:font "CMU Serif"))
                 ((x-list-fonts "Source Sans Pro") '(:font "Source Sans Pro"))
                 ((x-list-fonts "Lucida Grande")   '(:font "Lucida Grande"))
                 ((x-list-fonts "Verdana")         '(:font "Verdana"))
