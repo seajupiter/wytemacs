@@ -28,7 +28,8 @@
     (or (evil-visual-state-p)
         (evil-motion-state-p)
         (derived-mode-p 'magit-mode)
-        (derived-mode-p 'ibuffer-mode)))
+        (derived-mode-p 'ibuffer-mode)
+        (derived-mode-p 'treemacs-mode)))
   (evil-escape-mode))
 
 (use-package evil-surround

@@ -1,4 +1,4 @@
-;;; general.el keybindings
+;; general.el keybindings
 
 (use-package general :ensure t
   :straight (general :type git
@@ -7,6 +7,13 @@
   :config
   (general-swap-key nil 'motion
     ";" ":")
+
+  (general-def '(normal insert)
+    "s-/" (lambda () (interactive)
+            (comment-line 1)
+            (previous-line)))
+  (general-def '(visual motion)
+    "s-/" 'comment-dwim)
 
   (general-def '(normal motion visual)
     "H" 'evil-first-non-blank
@@ -23,7 +30,7 @@
     "b d" 'evil-delete-buffer
     "b i" 'ibuffer
 
-    "TAB" 'neotree-toggle
+    "TAB" 'treemacs
 
     "x f" 'find-file
     "x e" 'eval-last-sexp

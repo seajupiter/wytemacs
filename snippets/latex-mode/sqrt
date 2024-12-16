@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: sqaure root
+# key: sq
+# condition: (and (texmathp) 'auto)
+# group: math
+# --
+\sqrt{$1}$0

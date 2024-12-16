@@ -1,0 +1,7 @@
+# -*- mode: snippet -*-
+# name: absolute value
+# key: abs
+# condition: (and (texmathp) 'auto)
+# group: math
+# --
+\\left\\lvert $1 \\right\\rvert $0
