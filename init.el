@@ -40,18 +40,14 @@
 
 (add-to-list 'load-path (concat user-emacs-directory "lisp/"))
 
-(require 'init-theme)
 (require 'init-sane-defaults)
+(require 'init-theme)
 (require 'init-evil)
-(require 'init-misc)
-(require 'init-completion-at-point)
-(require 'init-completion-minibuffer)
-(require 'init-telescope)
+(require 'init-completion)
 (require 'init-latex)
-(require 'init-cite)
 (require 'init-org)
 (require 'init-snippet)
-(require 'init-ai)
+(require 'init-misc)
 
 (require 'init-general)
 

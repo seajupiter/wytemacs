@@ -21,15 +21,6 @@
   :init
   (setq writeroom-width 100))
 
-;; (use-package ultra-scroll-mac
-;;   :straight (ultra-scroll-mac :type git :host github :repo "jdtsmith/ultra-scroll-mac")
-;;   :if (eq window-system 'mac)
-;;   :init
-;;   (setq scroll-conservatively 101 ; important!
-;;         scroll-margin 0) 
-;;   :config
-;;   (ultra-scroll-mac-mode 1))
-
 ;; git integration
 (use-package magit
   :straight t)
@@ -150,5 +141,23 @@
   :after (treemacs)
   :straight t
   :config (treemacs-set-scope-type 'Tabs))
+
+
+;; Telescope
+(use-package consult :straight t)
+
+(use-package projectile :straight t
+  :config (projectile-mode 1))
+
+;; AI
+(use-package copilot
+  :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
+  :ensure t
+  :config
+  (add-to-list 'copilot-indentation-alist '(prog-mode 2))
+  (add-to-list 'copilot-indentation-alist '(org-mode 2))
+  (add-to-list 'copilot-indentation-alist '(text-mode 2))
+  (add-to-list 'copilot-indentation-alist '(closure-mode 2))
+  (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2)))
 
 (provide 'init-misc)

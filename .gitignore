@@ -18,3 +18,4 @@ xenops
 .cache
 url
 tramp
+*.cache
