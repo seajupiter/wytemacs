@@ -36,6 +36,11 @@
   :straight t
   :config
   (global-evil-surround-mode 1))
+
+(use-package evil-mc
+  :straight t
+  :config
+  (global-evil-mc-mode 1))
   
 
 (provide 'init-evil)

@@ -6,7 +6,7 @@
 (defun my/setup-new-frame (frame)
   "Custom function to set up a newly created FRAME"
   (with-selected-frame frame
-    (set-frame-height (selected-frame) 45)
+    (set-frame-height (selected-frame) 50)
     (set-frame-width (selected-frame) 100)))
 
 (add-hook 'after-make-frame-functions #'my/setup-new-frame)
@@ -33,23 +33,23 @@
       tab-always-indent t)
 
 (straight-use-package 'use-package)
+(straight-use-package 'org)
 
 ;; Font
 (add-to-list 'default-frame-alist
-             '(font . "JetbrainsMono Nerd Font-14:regular"))
+             '(font . "UbuntuMono Nerd Font-18:regular"))
 
 (add-to-list 'load-path (concat user-emacs-directory "lisp/"))
 
 (require 'init-sane-defaults)
+(require 'init-misc)
 (require 'init-theme)
 (require 'init-evil)
 (require 'init-completion)
 (require 'init-latex)
 (require 'init-org)
 (require 'init-snippet)
-(require 'init-misc)
-
-(require 'init-general)
+(require 'init-mappings)
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
@@ -72,20 +72,5 @@
      "f366d4bc6d14dcac2963d45df51956b2409a15b770ec2f6d730e73ce0ca5c8a7"
      "b1a691bb67bd8bd85b76998caf2386c9a7b2ac98a116534071364ed6489b695d"
      default)))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(org-document-title ((t (:inherit default :weight bold :foreground "#bbc2cf" :font "CMU Serif" :height 2.0 :underline nil))))
- '(org-level-1 ((t (:inherit default :weight bold :foreground "#bbc2cf" :font "CMU Serif" :height 1.75))))
- '(org-level-2 ((t (:inherit default :weight bold :foreground "#bbc2cf" :font "CMU Serif" :height 1.5))))
- '(org-level-3 ((t (:inherit default :weight bold :foreground "#bbc2cf" :font "CMU Serif" :height 1.25))))
- '(org-level-4 ((t (:inherit default :weight bold :foreground "#bbc2cf" :font "CMU Serif" :height 1.1))))
- '(org-level-5 ((t (:inherit default :weight bold :foreground "#bbc2cf" :font "CMU Serif"))))
- '(org-level-6 ((t (:inherit default :weight bold :foreground "#bbc2cf" :font "CMU Serif"))))
- '(org-level-7 ((t (:inherit default :weight bold :foreground "#bbc2cf" :font "CMU Serif"))))
- '(org-level-8 ((t (:inherit default :weight bold :foreground "#bbc2cf" :font "CMU Serif"))))
- '(variable-pitch ((t (:family "CMU Serif" :height 200)))))
 (put 'TeX-narrow-to-group 'disabled nil)
 (put 'LaTeX-narrow-to-environment 'disabled nil)

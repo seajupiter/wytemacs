@@ -1,3 +1,6 @@
+;; Increase line height
+(setq-default line-spacing 0.2)
+
 ;; Smooth scrolling
 (setq scroll-conservatively 101)
 (pixel-scroll-precision-mode 1)
@@ -59,9 +62,6 @@
 
 ;; No line break space points
 (setq auto-fill-mode nil)
-
-;; Fill column at 80
-(setq fill-column 80)
 
 ;; No confirmation for visiting non-existent files
 (setq confirm-nonexistent-file-or-buffer nil)

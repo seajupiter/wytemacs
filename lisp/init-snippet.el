@@ -62,4 +62,45 @@
           (cdlatex-tab)
         (yas-next-field-or-maybe-expand)))))
 
+(use-package aas
+  :straight t
+  :hook (LaTeX-mode . aas-activate-for-major-mode)
+  :hook (org-mode . aas-activate-for-major-mode)
+  :config
+  (aas-global-mode))
+
+(use-package laas
+  :straight t
+  :hook (LaTeX-mode . laas-mode)
+  :hook (org-mode . laas-mode)
+  :config ; do whatever here
+  (aas-set-snippets 'laas-mode
+    ;; set condition!
+    :cond #'texmathp ; expand only while in math
+    "supp" "\\supp"
+    "On" "O(n)"
+    "O1" "O(1)"
+    "Olog" "O(\\log n)"
+    "Olon" "O(n \\log n)"
+
+    "max" nil
+    
+    ;; bind to functions!
+    "Sum" (lambda () (interactive)
+            (yas-expand-snippet "\\sum_{$1}^{$2} $0"))
+    "Span" (lambda () (interactive)
+             (yas-expand-snippet "\\Span($1)$0"))
+    "sq" (lambda () (interactive)
+           (yas-expand-snippet "\\sqrt{$1}$0"))
+    "norm" (lambda() (interactive)
+             (yas-expand-snippet "\\left\\lVert $1 \\right\\rVert"))
+    "ZZ" (lambda () (interactive)
+           (yas-expand-snippet "\\mathbb{Z}$0"))
+    "ooo" (lambda () (interactive)
+           (yas-expand-snippet "\\infty"))
+
+    ;; add accent snippets
+    :cond #'laas-object-on-left-condition
+    "qq" (lambda () (interactive) (laas-wrap-previous-object "sqrt"))))
+
 (provide 'init-snippet)

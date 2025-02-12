@@ -1,4 +1,3 @@
-# emacs stuff
 *~
 auto-save-list
 elpa
@@ -19,3 +18,5 @@ xenops
 url
 tramp
 *.cache
+.org-id-locations
+org-roam.db

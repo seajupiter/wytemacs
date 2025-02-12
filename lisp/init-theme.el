@@ -7,13 +7,15 @@
 ;;   :config
 ;;   (load-theme 'solo-jazz t))
 
-(use-package doom-themes
-  :straight t
-  :config
-  ;; Global settings (defaults)
-  (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-        doom-themes-enable-italic t) ; if nil, italics is universally disabled
-  (load-theme 'doom-ephemeral t))
+;; (use-package doom-themes
+;;   :straight t
+;;   :config
+;;   ;; Global settings (defaults)
+;;   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
+;;         doom-themes-enable-italic t) ; if nil, italics is universally disabled
+;;   (load-theme 'doom-ephemeral t))
+
+(load-theme 'whiteboard t)
 
 (custom-theme-set-faces
    'user

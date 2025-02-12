@@ -1,7 +1,7 @@
 ;; hiding titlebar
-(use-package ns-auto-titlebar
-  :straight t
-  :config (when (eq system-type 'darwin) (ns-auto-titlebar-mode)))
+;; (use-package ns-auto-titlebar
+;;   :straight t
+;;   :config (when (eq system-type 'darwin) (ns-auto-titlebar-mode)))
 
 ;; get shell's PATH envvar
 (use-package exec-path-from-shell
@@ -13,7 +13,8 @@
 (use-package visual-fill-column
   :straight t
   :init
-  (setq visual-fill-column-width 100)
+  (setq-default visual-fill-column-center-text t)
+  (setq visual-fill-column-width 120)
   (global-visual-fill-column-mode 1))
 
 (use-package writeroom-mode
@@ -159,5 +160,20 @@
   (add-to-list 'copilot-indentation-alist '(text-mode 2))
   (add-to-list 'copilot-indentation-alist '(closure-mode 2))
   (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2)))
+
+;; Help me find cursor position
+(use-package beacon
+  :straight t
+  :config
+  (beacon-mode 1))
+
+;; General keybindings definer
+(use-package general
+  :straight (general :type git
+                     :host github
+                     :repo "noctuid/general.el")
+  :init
+  (general-create-definer my/leader-def
+    :prefix "SPC"))
 
 (provide 'init-misc)
