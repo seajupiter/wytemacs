@@ -35,10 +35,6 @@
 (straight-use-package 'use-package)
 (straight-use-package 'org)
 
-;; Font
-(add-to-list 'default-frame-alist
-             '(font . "UbuntuMono Nerd Font-18:regular"))
-
 (add-to-list 'load-path (concat user-emacs-directory "lisp/"))
 
 (require 'init-sane-defaults)
@@ -71,6 +67,31 @@
      "1930427eae3d4d830a43fd79fbda76021138b929c243a4e8606cf4f0531ea17c"
      "f366d4bc6d14dcac2963d45df51956b2409a15b770ec2f6d730e73ce0ca5c8a7"
      "b1a691bb67bd8bd85b76998caf2386c9a7b2ac98a116534071364ed6489b695d"
-     default)))
+     default))
+ '(org-agenda-files
+   '("/Users/wyt/org/projects/TOEFL/speaking.org"
+     "/Users/wyt/org/projects/TOEFL/writing.org"
+     "/Users/wyt/org/projects/research/fine-grained-lattices.org"
+     "/Users/wyt/RoamNotes/Templates/BookNoteTemplate.org"
+     "/Users/wyt/RoamNotes/journal/2025-02-22.org"
+     "/Users/wyt/RoamNotes/20250222211516-speaking_section.org"
+     "/Users/wyt/RoamNotes/20250222212959-writing_section.org"
+     "/Users/wyt/RoamNotes/Inbox.org" "/Users/wyt/RoamNotes/init.org")))
 (put 'TeX-narrow-to-group 'disabled nil)
 (put 'LaTeX-narrow-to-environment 'disabled nil)
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(default ((t (:inherit nil :extend nil :stipple nil :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight regular :height 180 :width normal :foundry "nil" :family "UbuntuMono Nerd Font"))))
+ '(org-document-title ((t (:family "Fira Sans" :height 1.7 :underline nil))))
+ '(org-level-1 ((t (:family "Fira Sans" :height 1.6))))
+ '(org-level-2 ((t (:family "Fira Sans" :height 1.5))))
+ '(org-level-3 ((t (:family "Fira Sans" :height 1.4))))
+ '(org-level-4 ((t (:family "Fira Sans" :height 1.3))))
+ '(org-level-5 ((t (:family "Fira Sans"))))
+ '(org-level-6 ((t (:family "Fira Sans"))))
+ '(org-level-7 ((t (:family "Fira Sans"))))
+ '(org-level-8 ((t (:family "Fira Sans"))))
+ '(variable-pitch ((t (:family "CMU Serif" :height 200)))))

@@ -75,6 +75,10 @@
   :hook (org-mode . laas-mode)
   :config ; do whatever here
   (aas-set-snippets 'laas-mode
+    "mk" (lambda () (interactive)
+           (yas-expand-snippet "\\\\( $1 \\\\)$0"))
+    "dm" (lambda () (interactive)
+           (yas-expand-snippet "\\[\n  $1\n\\]\n$0"))
     ;; set condition!
     :cond #'texmathp ; expand only while in math
     "supp" "\\supp"

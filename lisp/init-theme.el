@@ -15,7 +15,11 @@
 ;;         doom-themes-enable-italic t) ; if nil, italics is universally disabled
 ;;   (load-theme 'doom-ephemeral t))
 
-(load-theme 'whiteboard t)
+(setq modus-themes-common-palette-overrides
+      '((fg-mode-line-active fg-main)
+        (border-mode-line-active unspecified)
+        (fringe unspecified)))
+(load-theme 'modus-vivendi t)
 
 (custom-theme-set-faces
    'user

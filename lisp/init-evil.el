@@ -4,9 +4,8 @@
   :init
   (setq evil-want-keybinding nil)
   (setq evil-undo-system 'undo-redo)
-  (setq evil-want-C-u-scroll t)
-  :custom
-  (evil-cross-lines t)
+  (setq evil-want-C-u-scroll nil)
+  (setq evil-cross-lines t)
   :config (evil-mode t))
 
 (use-package evil-collection

@@ -176,4 +176,10 @@
   (general-create-definer my/leader-def
     :prefix "SPC"))
 
+;; faster terminal
+(use-package vterm
+  :straight t
+  :bind
+  (("C-`" . vterm)))
+
 (provide 'init-misc)

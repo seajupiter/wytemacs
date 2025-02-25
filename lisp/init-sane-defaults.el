@@ -137,7 +137,7 @@
   (set-face-attribute 'fringe nil
                       :foreground (face-foreground 'default)
                       :background (face-background 'default)))
-(my/color-fringes)
+;; (my/color-fringes)
 
 ;; remember recent file
 (recentf-mode 1)
@@ -147,5 +147,8 @@
 
 ;; turn on which-key mode
 (which-key-mode)
+
+;; Font for Chinese
+(set-fontset-font t 'han "Pingfang SC")
 
 (provide 'init-sane-defaults)

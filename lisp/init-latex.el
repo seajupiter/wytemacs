@@ -19,7 +19,7 @@
         TeX-save-query nil
         TeX-master 'dwim
         TeX-PDF-mode nil
-        preview-pdf-color-adjust-method t
+        preview-pdf-color-adjust-method 'nil
         preview-image-type 'dvipng
         preview-scale-function 1.0)
   :config
