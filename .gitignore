@@ -21,3 +21,7 @@ tramp
 .org-id-locations
 org-roam.db
 bookmarks
+.aider*
+.lsp-session*
+history
+ielm-history*

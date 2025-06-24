@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 ;; Yasnippet settings
 (use-package yasnippet
   :straight t
@@ -102,9 +104,12 @@
            (yas-expand-snippet "\\mathbb{Z}$0"))
     "ooo" (lambda () (interactive)
            (yas-expand-snippet "\\infty"))
+    "xx" (lambda () (interactive)
+           (yas-expand-snippet "\\times"))
 
     ;; add accent snippets
     :cond #'laas-object-on-left-condition
-    "qq" (lambda () (interactive) (laas-wrap-previous-object "sqrt"))))
+    "qq" (lambda () (interactive) (laas-wrap-previous-object "sqrt"))
+    ",." (lambda () (interactive) (laas-wrap-previous-object "boldsymbol"))))
 
 (provide 'init-snippet)

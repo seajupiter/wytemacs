@@ -1,28 +1,27 @@
-;; (use-package gruvbox-theme :ensure t
-;;   :config
-;;   (load-theme 'gruvbox-dark-medium t))
+;; -*- lexical-binding: t; -*-
 
-;; (use-package solo-jazz-theme
-;;   :straight t
-;;   :config
-;;   (load-theme 'solo-jazz t))
+;; (use-package dracula-theme
+;; 	:straight t)
+;; (load-theme 'dracula t)
 
-;; (use-package doom-themes
-;;   :straight t
-;;   :config
-;;   ;; Global settings (defaults)
-;;   (setq doom-themes-enable-bold t    ; if nil, bold is universally disabled
-;;         doom-themes-enable-italic t) ; if nil, italics is universally disabled
-;;   (load-theme 'doom-ephemeral t))
+(add-to-list 'load-path "/Users/wyt/Repository/nano-emacs/")
+(setq nano-font-family-monospaced "JuliaMono")
+(setq nano-font-family-proportional "Fira Sans")
+(setq nano-font-size 16)
+(require 'nano-faces)
+(require 'nano-theme)
+(require 'nano-theme-dark)
+(require 'nano-layout)
+(require 'nano-defaults)
+(require 'nano-modeline)
+(require 'nano-bindings)
+(require 'nano-help)
+(nano-faces)
+(nano-theme-set-dark)
+(nano-refresh-theme)
+(set-face-attribute 'nano-face-critical nil
+                    :foreground "#FFFFFF"
+                    :background "#0096FF")
 
-(setq modus-themes-common-palette-overrides
-      '((fg-mode-line-active fg-main)
-        (border-mode-line-active unspecified)
-        (fringe unspecified)))
-(load-theme 'modus-vivendi t)
-
-(custom-theme-set-faces
-   'user
-   '(variable-pitch ((t (:family "CMU Serif" :height 200)))))
 
 (provide 'init-theme)

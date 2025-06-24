@@ -1,3 +1,0 @@
-;; general.el keybindings
-
-(provide 'init-general)

@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 ;; evil mode
 (use-package evil
   :straight t

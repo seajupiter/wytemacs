@@ -1,3 +1,5 @@
+;; -*- lexical-binding: t; -*-
+
 (defun my/edit-configuration ()
   "Open the init file."
   (interactive)
@@ -37,61 +39,14 @@
 
 (add-to-list 'load-path (concat user-emacs-directory "lisp/"))
 
-(require 'init-sane-defaults)
 (require 'init-misc)
-(require 'init-theme)
 (require 'init-evil)
 (require 'init-completion)
-(require 'init-latex)
+(require 'init-tex)
 (require 'init-org)
 (require 'init-snippet)
 (require 'init-mappings)
-
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-safe-themes
-   '("4ade6b630ba8cbab10703b27fd05bb43aaf8a3e5ba8c2dc1ea4a2de5f8d45882"
-     "2771ec93656faf267521dce9ffe1a6ad88cd0bea87aa0e8c4fc80bf355c58c1d"
-     "df6dfd55673f40364b1970440f0b0cb8ba7149282cf415b81aaad2d98b0f0290"
-     "2078837f21ac3b0cc84167306fa1058e3199bbd12b6d5b56e3777a4125ff6851"
-     "ff24d14f5f7d355f47d53fd016565ed128bf3af30eb7ce8cae307ee4fe7f3fd0"
-     "e8bd9bbf6506afca133125b0be48b1f033b1c8647c628652ab7a2fe065c10ef0"
-     "2b501400e19b1dd09d8b3708cefcb5227fda580754051a24e8abf3aff0601f87"
-     "9f297216c88ca3f47e5f10f8bd884ab24ac5bc9d884f0f23589b0a46a608fe14"
-     "2e7dc2838b7941ab9cabaa3b6793286e5134f583c04bde2fba2f4e20f2617cf7"
-     "88f7ee5594021c60a4a6a1c275614103de8c1435d6d08cc58882f920e0cec65e"
-     "48042425e84cd92184837e01d0b4fe9f912d875c43021c3bcb7eeb51f1be5710"
-     "1930427eae3d4d830a43fd79fbda76021138b929c243a4e8606cf4f0531ea17c"
-     "f366d4bc6d14dcac2963d45df51956b2409a15b770ec2f6d730e73ce0ca5c8a7"
-     "b1a691bb67bd8bd85b76998caf2386c9a7b2ac98a116534071364ed6489b695d"
-     default))
- '(org-agenda-files
-   '("/Users/wyt/org/projects/TOEFL/speaking.org"
-     "/Users/wyt/org/projects/TOEFL/writing.org"
-     "/Users/wyt/org/projects/research/fine-grained-lattices.org"
-     "/Users/wyt/RoamNotes/Templates/BookNoteTemplate.org"
-     "/Users/wyt/RoamNotes/journal/2025-02-22.org"
-     "/Users/wyt/RoamNotes/20250222211516-speaking_section.org"
-     "/Users/wyt/RoamNotes/20250222212959-writing_section.org"
-     "/Users/wyt/RoamNotes/Inbox.org" "/Users/wyt/RoamNotes/init.org")))
-(put 'TeX-narrow-to-group 'disabled nil)
-(put 'LaTeX-narrow-to-environment 'disabled nil)
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(default ((t (:inherit nil :extend nil :stipple nil :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight regular :height 180 :width normal :foundry "nil" :family "UbuntuMono Nerd Font"))))
- '(org-document-title ((t (:family "Fira Sans" :height 1.7 :underline nil))))
- '(org-level-1 ((t (:family "Fira Sans" :height 1.6))))
- '(org-level-2 ((t (:family "Fira Sans" :height 1.5))))
- '(org-level-3 ((t (:family "Fira Sans" :height 1.4))))
- '(org-level-4 ((t (:family "Fira Sans" :height 1.3))))
- '(org-level-5 ((t (:family "Fira Sans"))))
- '(org-level-6 ((t (:family "Fira Sans"))))
- '(org-level-7 ((t (:family "Fira Sans"))))
- '(org-level-8 ((t (:family "Fira Sans"))))
- '(variable-pitch ((t (:family "CMU Serif" :height 200)))))
+(require 'init-lang)
+(require 'init-ledger)
+(require 'init-sane-defaults)
+(require 'init-theme)

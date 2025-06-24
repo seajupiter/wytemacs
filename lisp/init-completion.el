@@ -1,14 +1,22 @@
+;; -*- lexical-binding: t; -*-
+
+(use-package savehist
+  :init
+  (savehist-mode))
+
 ;; Minibuffer Completion
 (use-package vertico
   :straight t
-  :config
+  :init
   (vertico-mode 1))
 
-(use-package orderless
-  :straight t
-  :custom
-  (completion-styles '(orderless basic))
-  (completion-category-overrides '((file (styles basic partial-completion)))))
+(use-package posframe
+	:straight t)
+
+(use-package vertico-posframe
+	:straight t
+	:init
+	(vertico-posframe-mode 1))
 
 ;; Enable rich annotations using the Marginalia package
 (use-package marginalia
@@ -23,25 +31,40 @@
 ;; Completion at point
 (use-package corfu
   :straight t
-  ;; Optional customizations
+	:bind (:map corfu-map
+							("C-e" . corfu-quit)
+							("C-l" . corfu-info-location)
+							("C-h" . corfu-info-documentation))
   :custom
   (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
   (corfu-auto t)                 ;; Enable auto completion
-  ;; (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
-  ;; (corfu-quit-no-match nil)      ;; Never quit, even if there is no match
-  ;; (corfu-preview-current nil)    ;; Disable current candidate preview
-  ;; (corfu-preselect 'prompt)      ;; Preselect the prompt
-  ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
-
-  ;; Enable Corfu only for certain modes. See also `global-corfu-modes'.
-  ;; :hook ((prog-mode . corfu-mode)
-  ;;        (shell-mode . corfu-mode)
-  ;;        (eshell-mode . corfu-mode))
-
-  ;; Recommended: Enable Corfu globally.  This is recommended since Dabbrev can
-  ;; be used globally (M-/).  See also the customization variable
-  ;; `global-corfu-modes' to exclude certain modes.
+	(corfu-auto-delay 0.05)					 
+	(corfu-auto-prefix 2)
   :init
-  (global-corfu-mode))
+  (global-corfu-mode 1)
+	(corfu-popupinfo-mode 1)
+	(corfu-history-mode 1)
+	(add-to-list 'savehist-minibuffer-history-variables 'corfu-history))
+
+(use-package nerd-icons-corfu
+	:straight t
+	:config
+	(add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
+
+(use-package cape
+	:straight t
+	:bind ("M-<tab>" . cape-prefix-map)
+	:init
+	(setq-default completion-at-point-functions
+								(append (default-value 'completion-at-point-functions)
+												(list #'cape-dabbrev #'cape-file #'cape-abbrev))))
+
+(use-package orderless
+  :straight t
+  :custom
+  (completion-styles '(orderless basic))
+	(completion-category-defaults nil)
+  (completion-category-overrides '((file (styles basic partial-completion))))
+	(completion-ignore-case t))
 
 (provide 'init-completion)

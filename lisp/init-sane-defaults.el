@@ -1,3 +1,10 @@
+;; -*- lexical-binding: t; -*-
+
+(setq custom-file "~/.emacs.d/custom.el")
+
+;; Don't show warnings on startup
+(setq warning-minimum-level :error)
+
 ;; Increase line height
 (setq-default line-spacing 0.2)
 
@@ -54,9 +61,6 @@
 ;; No cursor in inactive windows
 (setq cursor-in-non-selected-windows nil)
 
-;; Moderate font lock
-(setq font-lock-maximum-decoration nil)
-
 ;; No limit on font lock
 (setq font-lock-maximum-size nil)
 
@@ -65,10 +69,6 @@
 
 ;; No confirmation for visiting non-existent files
 (setq confirm-nonexistent-file-or-buffer nil)
-
-;; Completion style, see
-;; gnu.org/software/emacs/manual/html_node/emacs/Completion-Styles.html
-(setq completion-styles '(basic substring))
 
 ;; Use RET to open org-mode links, including those in quick-help.org
 (setq org-return-follows-link t)
@@ -82,11 +82,11 @@
 ;; y/n for  answering yes/no questions
 (fset 'yes-or-no-p 'y-or-n-p)
 
-;; No tabs
-(setq-default indent-tabs-mode nil)
-
-;; Tab.space equivalence
-(setq-default tab-width 4)
+;; Better tab and indent
+(setq-default indent-tabs-mode t)
+(setq-default tab-width 2)
+(setq-default electric-indent-inhibit t)
+(setq backward-delete-char-untabify-method 'hungry)
 
 ;; Size of temporary buffers
 (temp-buffer-resize-mode)
@@ -150,5 +150,11 @@
 
 ;; Font for Chinese
 (set-fontset-font t 'han "Pingfang SC")
+
+;; ;; Disable auto reindentation
+;; (electric-indent-mode -1)
+
+;; Enable autopair
+(electric-pair-mode 1)
 
 (provide 'init-sane-defaults)
