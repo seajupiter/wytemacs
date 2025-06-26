@@ -47,6 +47,5 @@
 (require 'init-snippet)
 (require 'init-mappings)
 (require 'init-lang)
-(require 'init-ledger)
 (require 'init-sane-defaults)
 (require 'init-theme)

@@ -24,6 +24,9 @@
   (setq writeroom-width 100))
 
 ;; git integration
+(use-package transient
+	:straight t)
+
 (use-package magit
   :straight t)
 
@@ -35,14 +38,7 @@
 
 ;; AI
 (use-package copilot
-  :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
-  :ensure t
-  :config
-  (add-to-list 'copilot-indentation-alist '(prog-mode 2))
-  (add-to-list 'copilot-indentation-alist '(org-mode 2))
-  (add-to-list 'copilot-indentation-alist '(text-mode 2))
-  (add-to-list 'copilot-indentation-alist '(closure-mode 2))
-  (add-to-list 'copilot-indentation-alist '(emacs-lisp-mode 2)))
+  :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el")))
 
 ;; Help me find cursor position
 (use-package beacon
@@ -99,5 +95,18 @@
   :bind
   (("C-;" . avy-goto-char)
    ("C-'" . avy-goto-char-2)))
+
+;; ledger -- PTA tool
+(use-package ledger-mode
+	:straight t
+	:mode ("\\.journal\\'" "\\.dat\\'" "\\.ledger\\'")
+	:hook (ledger-mode . flycheck-mode)
+	:bind
+	(("C-c C-x" . ledger-post-fill)))
+
+(use-package flycheck-ledger
+	:straight t
+	:after (flycheck ledger-mode)
+	:demand t)
 
 (provide 'init-misc)

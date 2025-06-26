@@ -154,7 +154,14 @@
 ;; ;; Disable auto reindentation
 ;; (electric-indent-mode -1)
 
+
 ;; Enable autopair
 (electric-pair-mode 1)
+
+;; Always follow symlinks
+(setq vc-follow-symlinks t)
+
+;; Display column number
+(column-number-mode 1)
 
 (provide 'init-sane-defaults)
