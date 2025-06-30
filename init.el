@@ -31,21 +31,22 @@
   (load bootstrap-file nil 'nomessage))
 
 (setq-default tab-width 4
-      indent-tabs-mode  t
+      indent-tabs-mode  nil
       tab-always-indent t)
 
 (straight-use-package 'use-package)
-(straight-use-package 'org)
+
 
 (add-to-list 'load-path (concat user-emacs-directory "lisp/"))
 
-(require 'init-misc)
-(require 'init-evil)
-(require 'init-completion)
-(require 'init-tex)
-(require 'init-org)
-(require 'init-snippet)
-(require 'init-mappings)
-(require 'init-lang)
-(require 'init-sane-defaults)
-(require 'init-theme)
+(progn
+  (require 'init-misc)
+  (require 'init-evil)
+  (require 'init-completion)
+  (require 'init-tex)
+  (require 'init-org)
+  (require 'init-snippet)
+  (require 'init-mappings)
+  (require 'init-lang)
+  (require 'init-sane-defaults)
+  (require 'init-theme))

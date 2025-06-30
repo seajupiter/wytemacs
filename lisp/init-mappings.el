@@ -1,16 +1,11 @@
 ;; -*- lexical-binding: t; -*-
 
-;; Other Keybindings
-
-(defun my/spc-spc-action ()
-  "Call `project-find-file` if in a Git repo, else `consult-fd`."
-  (interactive)
-  (if (vc-git-root default-directory)
-      (call-interactively #'project-find-file)
-    (call-interactively #'consult-fd)))
-
 (use-package general
+  :straight (general :type git :host github :repo "noctuid/general.el")
   :config
+  (general-create-definer my/leader-def
+    :prefix "SPC")
+
   (general-swap-key nil 'motion
     ";" ":")
 
@@ -41,7 +36,7 @@
     "x p f" 'project-find-file
     "x p g" 'project-find-regexp
 
-    "SPC" 'my/spc-spc-action
+    "SPC" 'consult-fd
     "f f" 'consult-find
     "f w" 'consult-ripgrep
     "/" 'consult-ripgrep
