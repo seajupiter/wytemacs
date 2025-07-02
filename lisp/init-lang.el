@@ -1,15 +1,21 @@
 ;; -*- lexical-binding: t; -*-
 
+(use-package treesit)
+
 (use-package lsp-mode
   :straight t
   :commands (lsp lsp-deferred)
-  :init
-  (setq lsp-keymap-prefix "C-c l"))
+  :custom
+  (lsp-keymap-prefix "C-c l"))
 
 (use-package lsp-ui
   :straight t
   :after lsp-mode
   :commands lsp-ui-mode)
+
+(use-package lsp-lua
+  :custom
+  )
 
 (use-package flycheck
   :straight t)
@@ -26,5 +32,8 @@
   (setq markdown-command "pandoc")
   :bind (:map markdown-mode-map
          ("C-c C-e" . markdown-do)))
+
+;; lua
+(use-package lua-ts-mode)
 
 (provide 'init-lang)

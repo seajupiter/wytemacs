@@ -25,3 +25,4 @@ bookmarks
 .lsp-session*
 history
 ielm-history*
+/tree-sitter/

@@ -49,4 +49,4 @@
   (require 'init-mappings)
   (require 'init-lang)
   (require 'init-sane-defaults)
-  (require 'init-theme))
+  (require 'init-ui))

@@ -3,6 +3,9 @@
 (use-package general
   :straight (general :type git :host github :repo "noctuid/general.el")
   :config
+  (general-def
+    "C-x k" 'kill-current-buffer)
+
   (general-create-definer my/leader-def
     :prefix "SPC")
 
@@ -26,7 +29,7 @@
   (my/leader-def 'normal
     "o c" 'my/edit-configuration
 
-    "b d" 'evil-delete-buffer
+    "b d" 'kill-current-buffer
     "b i" 'ibuffer
 
     "TAB" 'neotree-toggle
@@ -49,5 +52,7 @@
 
   (general-def 'insert
     "C-a" 'copilot-accept-completion))
+
+(global-unset-key (kbd "C-M-<backspace>"))
 
 (provide 'init-mappings)

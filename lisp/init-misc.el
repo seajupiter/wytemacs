@@ -25,7 +25,8 @@
   :after transient)
 
 (use-package consult
-  :straight t)
+  :straight t
+  :bind (("C-c v" . 'consult-buffer-other-window)))
 
 (use-package projectile
   :straight t

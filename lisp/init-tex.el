@@ -1,25 +1,37 @@
 ;; -*- lexical-binding: t; -*-
 
+(use-package pdf-tools
+  :straight t
+  :hook
+  (pdf-view-mode . (lambda ()
+                     (auto-revert-mode -1)))
+  :custom
+  (pdf-view-use-scaling t)
+  :config
+  (pdf-tools-install))
+
 (use-package auctex
   :straight t
-  :defer t
+  :hook
+  (TeX-mode . TeX-source-correlate-mode)
+  (TeX-mode . prettify-symbols-mode)
+  :custom
+  (TeX-source-correlate-method 'synctex)
+  (TeX-view-program-list '(("Sioyek"
+                            ("/Applications/sioyek.app/Contents/MacOS/sioyek %o --forward-search-file \"%b\" --forward-search-line %n --inverse-search \"emacsclient +%2 %1\""))))
+  (TeX-view-program-selection '((output-pdf "Sioyek")))
+  (TeX-parse-self t)
+  (TeX-save-query nil)
+  (TeX-master 'dwim)
+  (TeX-auto-save t)
+  (TeX-PDF-mode t)
+  (TeX-output-dir "build")
+  (preview-scale-function 1.3)
+  (preview-locating-previews-message nil)
+  (preview-protect-point t)
+  (preview-leave-open-previews-visible t)
   :config
-  (setq TeX-source-correlate-method 'synctex)
-  (setq TeX-view-program-list '(("Skim" "/Applications/Skim.app/Contents/SharedSupport/displayline -g -b %n %o %b")))
-  (setq TeX-view-program-selection '((output-pdf "Skim")))
-  (setq TeX-parse-self t)
-  (setq TeX-save-query nil)
-  (setq TeX-master 'dwim)
-  (setq TeX-auto-save t)
-  (setq TeX-PDF-mode t)
-  (setq-default TeX-output-dir "build"))
-
-(use-package auctex-cont-latexmk
-  :straight t
-  :after auctex
-  :bind
-  (:map LaTeX-mode-map
-        ("C-c k" . auctex-cont-latexmk-toggle)))
+  (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer))
 
 (use-package flymake
   :straight t

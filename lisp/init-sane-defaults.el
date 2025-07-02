@@ -8,12 +8,12 @@
 ;;; Basic UI Customization
 (setq inhibit-startup-screen t)         ; No startup screen
 (setq ring-bell-function 'ignore)       ; No audible bell
-(setq pop-up-windows nil)               ; No popup windows
 (blink-cursor-mode 1)                   ; No blinking cursor
 (column-number-mode 1)                  ; Show column number
 (global-visual-line-mode 1)             ; Wrap lines visually
 (setq-default line-spacing 0.2)         ; Add some space between lines
 (setq frame-resize-pixelwise t)         ; fine-grained window resizing
+(setopt initial-scratch-message ";; In the beginning there was darkness...\n\n")
 
 ;;; Scrolling
 (setq scroll-conservatively 101)
