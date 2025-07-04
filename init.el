@@ -41,12 +41,10 @@
 
 (progn
   (require 'init-misc)
-  (require 'init-evil)
   (require 'init-completion)
   (require 'init-tex)
   (require 'init-org)
   (require 'init-snippet)
-  (require 'init-mappings)
   (require 'init-lang)
   (require 'init-sane-defaults)
   (require 'init-ui))
