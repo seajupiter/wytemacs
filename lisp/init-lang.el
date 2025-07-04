@@ -13,10 +13,6 @@
   :after lsp-mode
   :commands lsp-ui-mode)
 
-(use-package lsp-lua
-  :custom
-  )
-
 (use-package flycheck
   :straight t)
 
