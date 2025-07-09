@@ -8,14 +8,6 @@
 
 ;;; Code:
 
-;; shortcut to edit config
-
-(defun my/conf-edit ()
-  "Open the init file."
-  (interactive)
-  (find-file user-init-file))
-(keymap-global-set "C-c o c" 'my/conf-edit)
-
 ;;;; Bootstrap elpaca package manager
 
 (defvar elpaca-installer-version 0.11)
@@ -60,6 +52,54 @@
 (elpaca elpaca-use-package
   (elpaca-use-package-mode))
 
+;;;; Daemon mode fixes
+
+;; Fix for terminal frames in daemon mode
+(defun my/setup-terminal-frame ()
+  "Setup terminal-specific settings when creating a terminal frame."
+  (when (not (display-graphic-p))
+    ;; Disable modes that don't work well in terminal
+    (pixel-scroll-precision-mode -1)
+    ;; Reset font to something that works in terminal
+    (set-face-attribute 'default nil :family "JuliaMono" :height 150)
+    ;; Ensure proper terminal encoding
+    (set-terminal-coding-system 'utf-8)
+    (set-keyboard-coding-system 'utf-8)))
+
+(defun my/setup-new-frame (frame)
+  "Custom function to set up a newly created FRAME"
+  (with-selected-frame frame
+    (if (display-graphic-p frame)
+        ;; GUI frame setup
+        (progn
+          (set-frame-height (selected-frame) 50)
+          (set-frame-width (selected-frame) 100)
+          (set-face-attribute 'default nil :family "JuliaMono" :height 150))
+      ;; Terminal frame setup
+      (my/setup-terminal-frame))))
+
+;; Apply terminal fixes to existing frames if running in daemon mode
+(if (daemonp)
+    (progn
+      (add-hook 'after-make-frame-functions #'my/setup-new-frame)
+      ;; If we already have a terminal frame, fix it
+      (when (not (display-graphic-p))
+        (my/setup-terminal-frame)))
+  ;; Non-daemon mode
+  (add-hook 'after-make-frame-functions #'my/setup-new-frame))
+
+;; Ensure environment variables are properly set for daemon mode
+(defun my/setup-environment-for-daemon ()
+  "Set up environment variables for daemon mode."
+  (when (daemonp)
+    ;; Ensure TERM is set appropriately
+    (unless (getenv "TERM")
+      (setenv "TERM" "xterm-256color"))
+    ;; Ensure proper PATH
+    (when (executable-find "fish")
+      (setenv "SHELL" (executable-find "fish")))))
+
+(my/setup-environment-for-daemon)
 
 ;;;; Sane defaults
 
@@ -71,7 +111,6 @@
 (blink-cursor-mode 1)                   ; No blinking cursor
 (column-number-mode 1)                  ; Show column number
 (global-visual-line-mode 1)             ; Wrap lines visually
-(scroll-bar-mode -1)
 (tool-bar-mode -1)
 (setq-default left-margin-width 0)
 (setq-default right-margin-width 0)
@@ -80,7 +119,9 @@
 (setq frame-resize-pixelwise t)         ; fine-grained window resizing
 (setopt initial-scratch-message ";; In the beginning there was darkness...\n\n")
 (setq scroll-conservatively 101)
-(pixel-scroll-precision-mode 1)
+;; Only enable pixel-scroll in GUI frames
+(when (display-graphic-p)
+  (pixel-scroll-precision-mode 1))
 (setq make-backup-files nil)             ; No backup files ~
 (setq create-lockfiles nil)              ; No lockfiles #
 (setq delete-by-moving-to-trash t)       ; Move deleted files to trash
@@ -97,9 +138,10 @@
 (fset 'yes-or-no-p 'y-or-n-p)            ; y/n instead of yes/no
 (electric-pair-mode 1)                  ; Auto-pair delimiters
 (recentf-mode 1)                        ; Keep track of recent files
-(set-face-attribute 'default nil :family "JuliaMono" :height 160)
-(set-fontset-font t 'han "Pingfang SC")
-(keymap-global-set "C-x k" 'kill-current-buffer)
+;; Set font only for GUI frames initially
+(when (display-graphic-p)
+  (set-face-attribute 'default nil :family "JuliaMono" :height 160)
+  (set-fontset-font t 'han "Pingfang SC"))
 
 ;; on macos, fix "This Emacs binary lacks sound support" 
 ;; - https://github.com/leoliu/play-sound-osx/blob/master/play-sound.el
@@ -133,21 +175,92 @@
   :config
   (which-key-mode))
 
-
-;;;; Theme
-
-(use-package doom-themes
+(use-package undo-tree
   :ensure t
   :config
-  (load-theme 'doom-nord t)
-  (doom-themes-visual-bell-config)
-  (doom-themes-neotree-config)
-  (doom-themes-org-config))
+  (global-undo-tree-mode))
 
-(use-package doom-modeline
+;;;; Keymap 
+
+(use-package general :ensure (:wait t) :demand t)
+
+(defun my/scroll-half-page (direction)
+  "Scroll half a page up or down depending on DIRECTION.
+If DIRECTION is 'up, scroll up; if 'down, scroll down."
+  (interactive
+   (list (if current-prefix-arg 'up 'down))) ; with C-u, scroll up
+  (let ((n (/ (window-body-height) 2)))
+    (cond
+     ((eq direction 'up) (scroll-down n))
+     ((eq direction 'down) (scroll-up n)))))
+
+;;;; Evil
+
+(use-package evil
   :ensure t
-  :init (doom-modeline-mode 1))
+  :custom
+  (evil-want-keybinding nil)
+  (evil-undo-system 'undo-tree)
+  (evil-want-C-u-scroll nil)
+  (evil-cross-lines t)
+  :general-config
+  (general-swap-key nil 'motion ";" ":")
+  (general-def :states '(normal motion visual)
+    "H" 'evil-first-non-blank
+    "L" 'evil-end-of-line
+    "j" 'evil-next-visual-line
+    "k" 'evil-previous-visual-line)
+  (general-def :states 'normal
+    "SPC o c" (lambda () (interactive) (find-file user-init-file))
+    "SPC b d" 'kill-current-buffer
+    "SPC b i" 'ibuffer
+    "SPC x f" 'find-file
+    "SPC x e" 'eval-last-sexp
+    "SPC x p f" 'project-find-file
+    "SPC x p g" 'project-find-regexp)
+  :config
+  (evil-mode 1))
 
+(use-package evil-commentary
+  :ensure t
+  :config
+  (evil-commentary-mode))
+
+(use-package evil-escape
+  :ensure t
+  :config
+  (setq-default evil-escape-key-sequence "jk")
+  (defun my/evil-escape-inhibit ()
+    (or (evil-visual-state-p)
+        (evil-motion-state-p)
+        (derived-mode-p 'magit-mode)
+        (derived-mode-p 'ibuffer-mode)
+        (derived-mode-p 'treemacs-mode)))
+  (setq evil-escape-inhibit-functions '(my/evil-escape-inhibit))
+  (evil-escape-mode))
+
+(use-package evil-collection
+  :ensure t
+  :after evil
+  :config
+  (evil-collection-init))
+
+(use-package evil-surround
+  :ensure t
+  :after evil
+  :config
+  (global-evil-surround-mode 1))
+
+(use-package evil-mc
+  :ensure t
+  :after evil
+  :config
+  (global-evil-mc-mode 1))
+
+(use-package spacemacs-theme
+  :ensure t
+  :config
+  (load-theme 'spacemacs-dark t))
 
 ;;;; Completion
 
@@ -165,14 +278,15 @@
 
 (use-package vertico-posframe
   :ensure t
-  :after posframe
+  :after posframe 
   :custom
   (vertico-multiform-commands
    '((consult-line (:not posframe))
      (consult-ripgrep (:not posframe))
      (t posframe)))
   :config
-  (vertico-posframe-mode 1))
+  (vertico-posframe-mode 1)
+  (vertico-multiform-mode 1))
 
 (use-package marginalia
   :ensure t
@@ -182,11 +296,6 @@
 
 (use-package corfu
   :ensure t
-  :hook (prog-mode . corfu-mode)
-  :bind (:map corfu-map
-              ("C-e" . corfu-quit)
-              ("C-l" . corfu-info-location)
-              ("C-h" . corfu-info-documentation))
   :custom
   (corfu-cycle t)
   (corfu-auto t)
@@ -197,19 +306,24 @@
   (corfu-popupinfo-mode 1)
   (corfu-history-mode 1)
   (add-to-list 'savehist-minibuffer-history-variables 'corfu-history)
+  :general-config
+  (general-def :keymaps 'corfu-map
+    "C-e" 'corfu-quit
+    "C-l" 'corfu-info-location
+    "C-h" 'corfu-info-documentation))
+
+(use-package nerd-icons-corfu
+  :ensure t
   :config
-  (use-package nerd-icons-corfu
-    :ensure t
-    :config
-    (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter)))
+  (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
 
 (use-package cape
-	      :ensure t
-	      :bind ("M-<tab>" . cape-prefix-map)
-	      :init
-	      (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-	      (add-to-list 'completion-at-point-functions #'cape-file)
-	      (add-to-list 'completion-at-point-functions #'cape-abbrev))
+  :ensure t
+  :bind ("M-<tab>" . cape-prefix-map)
+  :init
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+  (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-abbrev))
 
 (use-package orderless
   :ensure t
@@ -218,7 +332,6 @@
   (completion-category-defaults nil)
   (completion-category-overrides '((file (styles basic partial-completion))))
   (completion-ignore-case t))
-
 
 ;;;; Tex
 
@@ -229,9 +342,9 @@
   (TeX-mode . prettify-symbols-mode)
   :custom
   (TeX-source-correlate-method 'synctex)
-  (TeX-view-program-list '(("Sioyek"
-                            ("/Applications/sioyek.app/Contents/MacOS/sioyek %o --forward-search-file \"%b\" --forward-search-line %n --inverse-search \"emacsclient +%2 %1\""))))
-  (TeX-view-program-selection '((output-pdf "Sioyek")))
+  (TeX-view-program-list   ;; Use Skim, it's awesome
+   '(("Skim" "/Applications/Skim.app/Contents/SharedSupport/displayline -g -b %n %o %b")))
+  (TeX-view-program-selection '((output-pdf "Skim")))
   (TeX-parse-self t)
   (TeX-save-query nil)
   (TeX-master 'dwim)
@@ -242,6 +355,9 @@
   (preview-locating-previews-message nil)
   (preview-protect-point t)
   (preview-leave-open-previews-visible t)
+  :general-config
+  (general-def :keymaps 'LaTeX-mode-map
+    "s-B" 'TeX-command-run-all)
   :config
   (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer))
 
@@ -249,10 +365,10 @@
   :ensure t
   :custom
   (flymake-show-diagnostics-at-end-of-line t)
-  :bind
-  (:map flymake-mode-map
-        ("M-n" . flymake-goto-next-error)
-        ("M-p" . flymake-goto-prev-error)))
+  :general-config
+  (general-def :keymaps 'flymake-mode-map
+    "M-n" 'flymake-goto-next-error
+    "M-p" 'flymake-goto-prev-error))
 
 (use-package preview-auto
   :ensure t
@@ -262,8 +378,9 @@
   :ensure t
   :after (yasnippet)
   :hook (LaTeX-mode . turn-on-cdlatex)
-  :bind (:map cdlatex-mode-map
-              ("<tab>" . cdlatex-tab))
+  :general-config
+  (general-def :keymaps 'cdlatex-mode-map
+    "<tab>" 'cdlatex-tab)
   :config
   (defun cdlatex-in-yas-field ()
     (when-let* ((_ (overlayp yas--active-field-overlay))
@@ -280,17 +397,21 @@
                                      (point))
                      (overlay-end yas--active-field-overlay)))
           (goto-char minp) t))))
-
   (defun yas-next-field-or-cdlatex ()
     (interactive)
     (if (or (bound-and-true-p cdlatex-mode)
             (bound-and-true-p org-cdlatex-mode))
         (cdlatex-tab)
       (yas-next-field-or-maybe-expand)))
+  (general-def :keymaps 'yas-keymap
+    "<tab>" 'yas-next-field-or-cdlatex
+    "TAB" 'yas-next-field-or-cdlatex))
 
-  (define-key yas-keymap (kbd "<tab>") #'yas-next-field-or-cdlatex)
-  (define-key yas-keymap (kbd "TAB") #'yas-next-field-or-cdlatex))
-
+(use-package evil-tex
+  :ensure t
+  :hook
+  ((LaTeX-mode . evil-tex-mode)
+   (org-mode . evil-tex-mode)))
 
 ;;;; Org
 
@@ -317,20 +438,11 @@
   (interactive)
   (org-cdlatex-mode)
   (org-indent-mode)
-  (visual-line-mode)
-  (add-to-list 'evil-surround-pairs-alist '(?/ . ("/" . "/")))
-  (add-to-list 'evil-surround-pairs-alist '(?* . ("*" . "*")))
-  (add-to-list 'evil-surround-pairs-alist '(?_ . ("_" . "_"))))
+  (visual-line-mode))
 
 (use-package org
   :ensure t
   :hook (org-mode . org-mode-setup)
-  :bind
-  (("C-c a" . 'org-agenda-list)
-   :map org-mode-map
-   ("s-b" . (lambda () (interactive) (wrap-with-delimiters (region-beginning) (region-end) "*")))
-   ("s-i" . (lambda () (interactive) (wrap-with-delimiters (region-beginning) (region-end) "/")))
-   ("s-_" . (lambda () (interactive) (wrap-with-delimiters (region-beginning) (region-end) "_"))))
   :custom
   (org-startup-truncated nil)
   (org-hide-emphasis-markers t)
@@ -340,11 +452,16 @@
   (org-clock-sound "~/Music/ding.wav")
   (org-clock-clocked-in-display 'frame-title)
   (org-pretty-entities t)
+  :general-config
+  (general-def "C-c a" 'org-agenda-list)
+  (general-def :keymaps 'org-mode-map
+    "s-b" (lambda () (interactive) (wrap-with-delimiters (region-beginning) (region-end) "*"))
+    "s-i" (lambda () (interactive) (wrap-with-delimiters (region-beginning) (region-end) "/"))
+    "s-_" (lambda () (interactive) (wrap-with-delimiters (region-beginning) (region-end) "_")))
   :config
   (plist-put org-format-latex-options :background "Transparent")
   (plist-put org-format-latex-options :foreground "White")
   (plist-put org-format-latex-options :scale 2.0)
-
   (defvar my/org-prettify-symbols nil
     "Alist for `prettify-symbols-mode'.")
 
@@ -427,19 +544,11 @@
 (use-package org-download
   :ensure t
   :after org
-  :bind
-  (:map org-mode-map
-        ("C-c p p" . org-download-clipboard))
+  :general
+  (general-def :keymaps 'org-mode-map
+    "C-c p p" 'org-download-clipboard)
   :init
   (setq org-download-method 'directory))
-
-(use-package evil-org
-  :ensure t
-  :after org
-  :hook (org-mode . evil-org-mode)
-  :config
-  (require 'evil-org-agenda)
-  (evil-org-agenda-set-keys))
 
 (use-package org-modern
   :ensure t
@@ -512,10 +621,6 @@
 (use-package flycheck
   :ensure t)
 
-;; lisp
-(load (expand-file-name "~/.quicklisp/slime-helper.el") 'noerror 'nomessage)
-(setq inferior-lisp-program "sbcl")
-
 ;; elisp 
 (use-package elisp-mode
   :hook
@@ -533,9 +638,7 @@
   :ensure t
   :mode ("\\.md\\'" . gfm-mode)
   :init
-  (setq markdown-command "pandoc")
-  :bind (:map markdown-mode-map
-         ("C-c C-e" . markdown-do)))
+  (setq markdown-command "pandoc"))
 
 ;; lua
 (use-package lua-ts-mode)
@@ -543,11 +646,9 @@
 
 ;;;; Misc
 
-(load-file (concat user-emacs-directory "utils/unbound.el"))
-
 (use-package exec-path-from-shell
   :ensure t
-  :init
+  :config
   (exec-path-from-shell-initialize))
 
 (use-package writeroom-mode
@@ -567,7 +668,15 @@
 
 (use-package consult
   :ensure t
-  :bind (("C-c v" . 'consult-buffer-other-window)))
+  :general
+  (general-def :states 'normal
+    "SPC ." 'consult-fd
+    "SPC f l" 'consult-line
+    "SPC f w" 'consult-ripgrep
+    "SPC /" 'consult-ripgrep
+    "SPC f t" 'consult-theme
+    "SPC ," 'consult-buffer
+    "SPC f r" 'consult-recent-file))
 
 (use-package projectile
   :ensure t
@@ -584,12 +693,12 @@
 
 (use-package vterm
   :ensure t
-  :bind
-  (("C-`" . vterm)
-   :map vterm-mode-map
-   ("C-`" . switch-to-prev-buffer))
   :custom
-  (vterm-shell "/opt/homebrew/bin/fish"))
+  (vterm-shell "/opt/homebrew/bin/fish")
+  :general
+  (general-def "C-`" 'vterm)
+  (general-def :keymaps 'vterm-mode-map
+    "C-`" 'switch-to-prev-buffer))
 
 (use-package nerd-icons
   :ensure t
@@ -598,9 +707,6 @@
 
 (use-package neotree
   :ensure t
-  :bind
-  (("C-c t n" . neotree-toggle)
-   ([f8] . neotree-toggle))
   :hook
   (neo-after-create . (lambda (&rest _)
 			(setq truncate-lines t)
@@ -611,26 +717,29 @@
     (let ((buffer (current-buffer)))
       (neotree-find (projectile-project-root))
       (set-buffer buffer)))
-  :config
-  (setq neo-theme (if (display-graphic-p) 'nerd-icons 'arrow))
-  (setq neo-window-fixed-size nil))
+  :general
+  (general-def :states 'normal "SPC TAB" 'neotree-toggle)
+  (general-def [f8] 'neotree-toggle))
+:config
+(setq neo-theme (if (display-graphic-p) 'nerd-icons 'arrow))
+(setq neo-window-fixed-size nil)
 
 (use-package avy
   :ensure t
-  :bind
-  (("C-;" . avy-goto-char)
-   ("C-'" . avy-goto-char-2)
-   ("C-c s" . avy-goto-char-timer)))
+  :general
+  (general-def
+    "C-;" 'avy-goto-char-2)
+  (general-def :states '(normal visual)
+    "SPC z" 'avy-goto-char-2
+    "s" 'avy-goto-char-timer))
 
 (use-package ledger-mode
   :ensure t
-  :mode ("\\.journal\\'" . ledger-mode)
-  :bind
-  (:map ledger-mode-map
-        ("C-c C-x" . ledger-post-fill)))
+  :mode ("\\.journal\\'" . ledger-mode))
 
 (use-package flycheck-ledger
   :ensure t
   :after (flycheck ledger-mode))
 
 ;;; init.el ends here
+
