@@ -655,6 +655,8 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
 
 (use-package magit
   :ensure t
+  :hook
+  (magit-post-refresh . diff-hl-magit-post-refresh)
   :after transient)
 
 (use-package diff-hl
