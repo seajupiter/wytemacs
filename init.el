@@ -52,55 +52,6 @@
 (elpaca elpaca-use-package
   (elpaca-use-package-mode))
 
-;;;; Daemon mode fixes
-
-;; Fix for terminal frames in daemon mode
-(defun my/setup-terminal-frame ()
-  "Setup terminal-specific settings when creating a terminal frame."
-  (when (not (display-graphic-p))
-    ;; Disable modes that don't work well in terminal
-    (pixel-scroll-precision-mode -1)
-    ;; Reset font to something that works in terminal
-    (set-face-attribute 'default nil :family "JuliaMono" :height 150)
-    ;; Ensure proper terminal encoding
-    (set-terminal-coding-system 'utf-8)
-    (set-keyboard-coding-system 'utf-8)))
-
-(defun my/setup-new-frame (frame)
-  "Custom function to set up a newly created FRAME"
-  (with-selected-frame frame
-    (if (display-graphic-p frame)
-        ;; GUI frame setup
-        (progn
-          (set-frame-height (selected-frame) 50)
-          (set-frame-width (selected-frame) 100)
-          (set-face-attribute 'default nil :family "JuliaMono" :height 150))
-      ;; Terminal frame setup
-      (my/setup-terminal-frame))))
-
-;; Apply terminal fixes to existing frames if running in daemon mode
-(if (daemonp)
-    (progn
-      (add-hook 'after-make-frame-functions #'my/setup-new-frame)
-      ;; If we already have a terminal frame, fix it
-      (when (not (display-graphic-p))
-        (my/setup-terminal-frame)))
-  ;; Non-daemon mode
-  (add-hook 'after-make-frame-functions #'my/setup-new-frame))
-
-;; Ensure environment variables are properly set for daemon mode
-(defun my/setup-environment-for-daemon ()
-  "Set up environment variables for daemon mode."
-  (when (daemonp)
-    ;; Ensure TERM is set appropriately
-    (unless (getenv "TERM")
-      (setenv "TERM" "xterm-256color"))
-    ;; Ensure proper PATH
-    (when (executable-find "fish")
-      (setenv "SHELL" (executable-find "fish")))))
-
-(my/setup-environment-for-daemon)
-
 ;;;; Sane defaults
 
 (setq custom-file (concat user-emacs-directory "custom.el"))
@@ -138,10 +89,10 @@
 (fset 'yes-or-no-p 'y-or-n-p)            ; y/n instead of yes/no
 (electric-pair-mode 1)                  ; Auto-pair delimiters
 (recentf-mode 1)                        ; Keep track of recent files
-;; Set font only for GUI frames initially
-(when (display-graphic-p)
-  (set-face-attribute 'default nil :family "JuliaMono" :height 160)
-  (set-fontset-font t 'han "Pingfang SC"))
+(set-face-attribute 'default nil :family "JuliaMono" :height 150)
+(set-fontset-font t 'han "Pingfang SC")
+(setq display-line-numbers-type 'relative)
+(global-display-line-numbers-mode 1)
 
 ;; on macos, fix "This Emacs binary lacks sound support" 
 ;; - https://github.com/leoliu/play-sound-osx/blob/master/play-sound.el
@@ -203,7 +154,19 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   (evil-undo-system 'undo-tree)
   (evil-want-C-u-scroll nil)
   (evil-cross-lines t)
-  :general-config
+  :config
+  (defun my/evil-shift-left-visual ()
+    (interactive)
+    (evil-shift-left (region-beginning) (region-end))
+    (evil-normal-state)
+    (evil-visual-restore))
+
+  (defun my/evil-shift-right-visual ()
+    (interactive)
+    (evil-shift-right (region-beginning) (region-end))
+    (evil-normal-state)
+    (evil-visual-restore))
+
   (general-swap-key nil 'motion ";" ":")
   (general-def :states '(normal motion visual)
     "H" 'evil-first-non-blank
@@ -218,7 +181,10 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
     "SPC x e" 'eval-last-sexp
     "SPC x p f" 'project-find-file
     "SPC x p g" 'project-find-regexp)
-  :config
+  (general-def :states 'visual
+    ">" 'my/evil-shift-right-visual
+    "<" 'my/evil-shift-left-visual) 
+
   (evil-mode 1))
 
 (use-package evil-commentary
@@ -257,10 +223,36 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   :config
   (global-evil-mc-mode 1))
 
-(use-package spacemacs-theme
+(use-package standard-themes
   :ensure t
+  :custom
+  (standard-themes-bold-constructs t)
+  (standard-themes-italic-constructs t)
+  (standard-themes-disable-other-themes t)
+  (standard-themes-mixed-fonts t)
+  (standard-themes-variable-pitch-ui t)
+  (standard-themes-prompts '(extrabold italic))
+  (standard-themes-to-toggle '(standard-dark standard-light-tinted))
+  (standard-themes-to-rotate '(standard-light standard-light-tinted standard-dark standard-dark-tinted))
+  ;; more complex alist to set weight, height, and optional
+  ;; `variable-pitch' per heading level (t is for any level not
+  ;; specified):
+  (standard-themes-headings
+   '((0 . (variable-pitch light 1.9))
+     (1 . (variable-pitch light 1.8))
+     (2 . (variable-pitch light 1.7))
+     (3 . (variable-pitch semilight 1.6))
+     (4 . (variable-pitch semilight 1.5))
+     (5 . (variable-pitch 1.4))
+     (6 . (variable-pitch 1.3))
+     (7 . (variable-pitch 1.2))
+     (agenda-date . (1.3))
+     (agenda-structure . (variable-pitch light 1.8))
+     (t . (variable-pitch 1.1))))
   :config
-  (load-theme 'spacemacs-dark t))
+  (load-theme 'standard-dark t)
+  (general-def :states 'normal
+    "SPC t t" 'standard-themes-toggle))
 
 ;;;; Completion
 
@@ -272,21 +264,6 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   :ensure t
   :init
   (vertico-mode 1))
-
-(use-package posframe
-  :ensure t)
-
-(use-package vertico-posframe
-  :ensure t
-  :after posframe 
-  :custom
-  (vertico-multiform-commands
-   '((consult-line (:not posframe))
-     (consult-ripgrep (:not posframe))
-     (t posframe)))
-  :config
-  (vertico-posframe-mode 1)
-  (vertico-multiform-mode 1))
 
 (use-package marginalia
   :ensure t
@@ -406,6 +383,11 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   (general-def :keymaps 'yas-keymap
     "<tab>" 'yas-next-field-or-cdlatex
     "TAB" 'yas-next-field-or-cdlatex))
+
+(use-package reftex
+  :custom
+  (reftex-plug-into-AUCTeX t)
+  :hook (LaTeX-mode . turn-on-reftex))
 
 (use-package evil-tex
   :ensure t
@@ -603,7 +585,7 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
 		    ",." (lambda () (interactive) (laas-wrap-previous-object "boldsymbol"))))
 
 
-;;;; Prog
+;;;; ProgLang
 
 (use-package treesit)
 
@@ -641,7 +623,16 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   (setq markdown-command "pandoc"))
 
 ;; lua
-(use-package lua-ts-mode)
+(use-package lua-ts-mode
+  :hook
+  (lua-ts-mode . lsp))
+
+;; Nushell
+(use-package nushell-mode :ensure t)
+
+;; configuration files
+(use-package conf-mode
+  :mode ("\\.skhdrc\\'" . conf-mode))
 
 
 ;;;; Misc
@@ -666,9 +657,20 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   :ensure t
   :after transient)
 
+(use-package diff-hl
+  :ensure t
+  :config
+  (global-diff-hl-mode)
+  (general-def :states 'normal
+    "SPC v =" 'diff-hl-diff-goto-hunk
+    "SPC v n" 'diff-hl-next-hunk
+    "SPC v p" 'diff-hl-previous-hunk
+    "SPC v s" 'diff-hl-show-hunk
+    "SPC v S" 'diff-hl-stage-dwim))
+
 (use-package consult
   :ensure t
-  :general
+  :general-config
   (general-def :states 'normal
     "SPC ." 'consult-fd
     "SPC f l" 'consult-line
