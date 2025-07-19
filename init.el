@@ -52,10 +52,23 @@
 (elpaca elpaca-use-package
   (elpaca-use-package-mode))
 
+;;;; Helper functions
+
+(defun is-nw-p ()
+  (or (and (not (daemonp))
+	   (not (display-graphic-p)))
+      (and (daemonp)
+	   (string= (daemonp) "nw"))))
+
+(defun is-gui-p ()
+  (or (and (not (daemonp))
+	   (display-graphic-p))
+      (and (daemonp)
+	   (string= (daemonp) "gui"))))
+
 ;;;; Sane defaults
 
-(setq custom-file (concat user-emacs-directory "custom.el"))
-(load custom-file 'noerror)
+(modify-all-frames-parameters '((ns-transparent-titlebar . t) (vertical-scroll-bars)))
 (setq warning-minimum-level :error)
 (setq inhibit-startup-screen t)         ; No startup screen
 (setq ring-bell-function 'ignore)       ; No audible bell
@@ -92,7 +105,6 @@
 (set-face-attribute 'default nil :family "JuliaMono" :height 150)
 (set-fontset-font t 'han "Pingfang SC")
 (setq display-line-numbers-type 'relative)
-(global-display-line-numbers-mode 1)
 
 ;; on macos, fix "This Emacs binary lacks sound support" 
 ;; - https://github.com/leoliu/play-sound-osx/blob/master/play-sound.el
@@ -174,13 +186,16 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
     "j" 'evil-next-visual-line
     "k" 'evil-previous-visual-line)
   (general-def :states 'normal
+    "C-f" (lambda () (interactive) (evil-scroll-down 0))
+    "C-b" (lambda () (interactive) (evil-scroll-up 0))
     "SPC o c" (lambda () (interactive) (find-file user-init-file))
     "SPC b d" 'kill-current-buffer
     "SPC b i" 'ibuffer
     "SPC x f" 'find-file
     "SPC x e" 'eval-last-sexp
     "SPC x p f" 'project-find-file
-    "SPC x p g" 'project-find-regexp)
+    "SPC x p g" 'project-find-regexp
+    "SPC t n" 'display-line-numbers-mode)
   (general-def :states 'visual
     ">" 'my/evil-shift-right-visual
     "<" 'my/evil-shift-left-visual) 
@@ -196,13 +211,12 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   :ensure t
   :config
   (setq-default evil-escape-key-sequence "jk")
-  (defun my/evil-escape-inhibit ()
-    (or (evil-visual-state-p)
-        (evil-motion-state-p)
-        (derived-mode-p 'magit-mode)
-        (derived-mode-p 'ibuffer-mode)
-        (derived-mode-p 'treemacs-mode)))
-  (setq evil-escape-inhibit-functions '(my/evil-escape-inhibit))
+  (setq evil-escape-inhibit-functions '((lambda () (interactive)
+					(or (evil-visual-state-p)
+					    (evil-motion-state-p)
+					    (derived-mode-p 'magit-mode)
+					    (derived-mode-p 'ibuffer-mode)
+					    (derived-mode-p 'treemacs-mode)))))
   (evil-escape-mode))
 
 (use-package evil-collection
@@ -223,36 +237,23 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   :config
   (global-evil-mc-mode 1))
 
-(use-package standard-themes
+;;;; Themes
+
+(use-package modus-themes
   :ensure t
-  :custom
-  (standard-themes-bold-constructs t)
-  (standard-themes-italic-constructs t)
-  (standard-themes-disable-other-themes t)
-  (standard-themes-mixed-fonts t)
-  (standard-themes-variable-pitch-ui t)
-  (standard-themes-prompts '(extrabold italic))
-  (standard-themes-to-toggle '(standard-dark standard-light-tinted))
-  (standard-themes-to-rotate '(standard-light standard-light-tinted standard-dark standard-dark-tinted))
-  ;; more complex alist to set weight, height, and optional
-  ;; `variable-pitch' per heading level (t is for any level not
-  ;; specified):
-  (standard-themes-headings
-   '((0 . (variable-pitch light 1.9))
-     (1 . (variable-pitch light 1.8))
-     (2 . (variable-pitch light 1.7))
-     (3 . (variable-pitch semilight 1.6))
-     (4 . (variable-pitch semilight 1.5))
-     (5 . (variable-pitch 1.4))
-     (6 . (variable-pitch 1.3))
-     (7 . (variable-pitch 1.2))
-     (agenda-date . (1.3))
-     (agenda-structure . (variable-pitch light 1.8))
-     (t . (variable-pitch 1.1))))
+  :if (is-nw-p)
   :config
-  (load-theme 'standard-dark t)
-  (general-def :states 'normal
-    "SPC t t" 'standard-themes-toggle))
+  (when custom-enabled-themes
+    (mapc #'disable-theme custom-enabled-themes))
+  (load-theme 'modus-vivendi t))
+
+(use-package solarized-theme
+  :ensure t
+  :if (is-gui-p)
+  :config
+  (when custom-enabled-themes
+    (mapc #'disable-theme custom-enabled-themes))
+  (load-theme 'solarized-dark t))
 
 ;;;; Completion
 
@@ -318,9 +319,11 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   (TeX-mode . TeX-source-correlate-mode)
   (TeX-mode . prettify-symbols-mode)
   :custom
+  (TeX-electric-escape t)
   (TeX-source-correlate-method 'synctex)
   (TeX-view-program-list   ;; Use Skim, it's awesome
-   '(("Skim" "/Applications/Skim.app/Contents/SharedSupport/displayline -g -b %n %o %b")))
+   '(("Skim" "/Applications/Skim.app/Contents/SharedSupport/displayline -g -b %n %o %b")
+     ("eaf" eaf-pdf-synctex-forward-view)))
   (TeX-view-program-selection '((output-pdf "Skim")))
   (TeX-parse-self t)
   (TeX-save-query nil)
@@ -393,7 +396,9 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   :ensure t
   :hook
   ((LaTeX-mode . evil-tex-mode)
-   (org-mode . evil-tex-mode)))
+   (org-mode . evil-tex-mode))
+  :config
+  (general-unbind :keymaps 'evil-tex-mode-map "M-n"))
 
 ;;;; Org
 
@@ -540,11 +545,51 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   (org-agenda-finalize . org-modern-agenda))
 
 
+;;;; Reference managing
+
+(use-package biblio
+  :ensure t)
+
+(use-package ebib
+  :ensure t
+  :custom
+  (ebib-index-columns '(("Entry Key" 12 t) ("Title" 50 t) ("Year" 6 t) ("Author/Editor" 20 nil)))
+  (ebib-layout 'full)
+  (ebib-index-window-size 45)
+  (ebib-file-associations '(("pdf" . "open") ("ps" . "open")))
+  (ebib-citation-commands '((LaTeX-mode
+			      (("cite" "\\cite%<[%A]%>[%A]{%(%K%,)}")
+			       ("paren" "\\parencite%<[%A]%>[%A]{%(%K%,)}")
+			       ("foot" "\\footcite%<[%A]%>[%A]{%(%K%,)}")
+			       ("text" "\\textcite%<[%A]%>[%A]{%(%K%,)}")
+			       ("smart" "\\smartcite%<[%A]%>[%A]{%(%K%,)}")
+			       ("super" "\\supercite{%K}")
+			       ("auto" "\\autocite%<[%A]%>[%A]{%(%K%,)}")
+			       ("cites" "\\cites%<(%A)%>(%A)%(%<[%A]%>[%A]{%K}%)")
+			       ("parens" "\\parencites%<(%A)%>(%A)%(%<[%A]%>[%A]{%K}%)")
+			       ("foots" "\\footcites%<(%A)%>(%A)%(%<[%A]%>[%A]{%K}%)")
+			       ("texts" "\\textcites%<(%A)%>(%A)%(%<[%A]%>[%A]{%K}%)")
+			       ("smarts" "\\smartcites%<(%A)%>(%A)%(%<[%A]%>[%A]{%K}%)")
+			       ("supers" "\\supercites%<(%A)%>(%A)%(%<[%A]%>[%A]{%K}%)")
+			       ("autos" "\\autoscites%<(%A)%>(%A)%(%<[%A]%>[%A]{%K}%)")
+			       ("author" "\\citeauthor%<[%A]%>[%A]{%(%K%,)}")
+			       ("title" "\\citetitle%<[%A]%>[%A]{%(%K%,)}")
+			       ("year" "\\citeyear%<[%A]%>[%A][%A]{%K}")
+			       ("date" "\\citedate%<[%A]%>[%A]{%(%K%,)}")
+			       ("full" "\\fullcite%<[%A]%>[%A]{%(%K%,)}")))
+			     (org-mode (("ebib" "[[ebib:%K][%D]]")))
+			     (markdown-mode
+			      (("text" "@%K%< [%A]%>") ("paren" "[%(%<%A %>@%K%<, %A%>%; )]")
+			       ("year" "[-@%K%< %A%>]")))))
+  :config
+  (general-def :keymaps 'LaTeX-mode-map
+    "C-c b" 'ebib-insert-citation))
+
+
 ;;;; Snippet
 (use-package yasnippet
   :ensure t
-  :hook ((prog-mode . yas-minor-mode)
-         (text-mode . yas-minor-mode))
+  :demand t
   :init
   (setq yas-triggers-in-field t)
   (setq yas-snippet-dirs (list (concat user-emacs-directory "snippets")))
@@ -589,19 +634,39 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
 
 (use-package treesit)
 
-(use-package lsp-mode
+(use-package evil-textobj-tree-sitter
   :ensure t
-  :commands (lsp lsp-deferred)
-  :custom
-  (lsp-keymap-prefix "C-c l"))
-
-(use-package lsp-ui
-  :ensure t
-  :after lsp-mode
-  :commands lsp-ui-mode)
+  :config
+  (define-key evil-outer-text-objects-map "f" (evil-textobj-tree-sitter-get-textobj "function.outer"))
+  (define-key evil-inner-text-objects-map "f" (evil-textobj-tree-sitter-get-textobj "function.inner"))
+  (define-key evil-outer-text-objects-map "a" (evil-textobj-tree-sitter-get-textobj "parameter.outer"))
+  (define-key evil-inner-text-objects-map "a" (evil-textobj-tree-sitter-get-textobj "parameter.inner"))
+  (define-key evil-normal-state-map (kbd "]f")
+	      (lambda () (interactive) (evil-textobj-tree-sitter-goto-textobj "function.outer")))
+  (define-key evil-normal-state-map (kbd "[f")
+	      (lambda () (interactive) (evil-textobj-tree-sitter-goto-textobj "function.outer" t)))
+  (define-key evil-normal-state-map (kbd "]F")
+              (lambda () (interactive) (evil-textobj-tree-sitter-goto-textobj "function.outer" nil t)))
+  (define-key evil-normal-state-map (kbd "[F")
+              (lambda () (interactive) (evil-textobj-tree-sitter-goto-textobj "function.outer" t t)))
+  (define-key evil-normal-state-map (kbd "]a")
+	      (lambda () (interactive) (evil-textobj-tree-sitter-goto-textobj "parameter.outer")))
+  (define-key evil-normal-state-map (kbd "[a")
+	      (lambda () (interactive) (evil-textobj-tree-sitter-goto-textobj "parameter.outer" t)))
+  (define-key evil-normal-state-map (kbd "]A")
+              (lambda () (interactive) (evil-textobj-tree-sitter-goto-textobj "parameter.outer" nil t)))
+  (define-key evil-normal-state-map (kbd "[A")
+              (lambda () (interactive) (evil-textobj-tree-sitter-goto-textobj "parameter.outer" t t))))
 
 (use-package flycheck
   :ensure t)
+
+(use-package markdown-mode
+  :ensure t
+  :mode ("\\.md\\'" . gfm-mode)
+  :demand t
+  :init
+  (setq markdown-command "pandoc"))
 
 ;; elisp 
 (use-package elisp-mode
@@ -615,25 +680,40 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
 		       (define-key outline-minor-mode-map (kbd "C-c C-u") 'outline-up-heading)
 		       (define-key outline-minor-mode-map (kbd "C-c C-t") 'outline-toggle-children))))
 
-;; Markdown
-(use-package markdown-mode
-  :ensure t
-  :mode ("\\.md\\'" . gfm-mode)
-  :init
-  (setq markdown-command "pandoc"))
 
 ;; lua
 (use-package lua-ts-mode
-  :hook
-  (lua-ts-mode . lsp))
+  :mode ("\\.lua\\'" . lua-ts-mode))
 
-;; Nushell
-(use-package nushell-mode :ensure t)
+;; rust
+(use-package rust-ts-mode
+  :mode ("\\.rs\\'" . rust-ts-mode))
+
+;; haskell
+(use-package haskell-ts-mode
+  :ensure t
+  :mode ("\\.hs\\'" . haskell-ts-mode)
+  :custom
+  (haskell-ts-font-lock-level 4)
+  (haskell-ts-use-indent t)
+  (haskell-ts-ghci "ghci")
+  (haskell-ts-use-indent t)
+  :config
+  (add-to-list 'treesit-language-source-alist
+	       '(haskell . ("https://github.com/tree-sitter/tree-sitter-haskell" "v0.23.1")))
+  (unless (treesit-grammar-location 'haskell)
+    (treesit-install-language-grammar 'haskell)))
 
 ;; configuration files
 (use-package conf-mode
   :mode ("\\.skhdrc\\'" . conf-mode))
 
+;; eglot
+(use-package eglot
+  :hook
+  (lua-ts-mode . eglot-ensure)
+  (rust-ts-mode . eglot-ensure)
+  (haskell-ts-mode . eglot-ensure))
 
 ;;;; Misc
 
@@ -690,19 +770,22 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
 (use-package copilot
   :ensure t)
 
-(use-package beacon
+(use-package gptel
   :ensure t
   :config
-  (beacon-mode 1))
+  (setq gptel-model 'claude-3.7-sonnet
+	gptel-backend (gptel-make-gh-copilot "Copilot")))
 
-(use-package vterm
-  :ensure t
-  :custom
-  (vterm-shell "/opt/homebrew/bin/fish")
+(use-package eshell
   :general
-  (general-def "C-`" 'vterm)
-  (general-def :keymaps 'vterm-mode-map
+  (general-def "C-`" 'eshell)
+  (general-def :keymaps 'eshell-mode-map
     "C-`" 'switch-to-prev-buffer))
+
+(use-package eat
+  :ensure t
+  :hook
+  (eshell-load . eat-eshell-mode))
 
 (use-package nerd-icons
   :ensure t
@@ -745,5 +828,8 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   :ensure t
   :after (flycheck ledger-mode))
 
-;;; init.el ends here
+;; custom
+(setq custom-file (concat user-emacs-directory "custom.el"))
+(load-file custom-file)
 
+;;; init.el ends here
