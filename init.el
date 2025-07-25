@@ -68,7 +68,7 @@
 
 ;;;; Sane defaults
 
-(modify-all-frames-parameters '((ns-transparent-titlebar . t) (vertical-scroll-bars)))
+(modify-all-frames-parameters '((vertical-scroll-bars)))
 (setq warning-minimum-level :error)
 (setq inhibit-startup-screen t)         ; No startup screen
 (setq ring-bell-function 'ignore)       ; No audible bell
@@ -102,7 +102,8 @@
 (fset 'yes-or-no-p 'y-or-n-p)            ; y/n instead of yes/no
 (electric-pair-mode 1)                  ; Auto-pair delimiters
 (recentf-mode 1)                        ; Keep track of recent files
-(set-face-attribute 'default nil :family "JuliaMono" :height 150)
+(set-face-attribute 'default nil :family "IBM Plex Mono" :height 150)
+(set-face-attribute 'variable-pitch nil :family "IBM Plex Sans" :height 150)
 (set-fontset-font t 'han "Pingfang SC")
 (setq display-line-numbers-type 'relative)
 
@@ -239,21 +240,8 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
 
 ;;;; Themes
 
-(use-package modus-themes
-  :ensure t
-  :if (is-nw-p)
-  :config
-  (when custom-enabled-themes
-    (mapc #'disable-theme custom-enabled-themes))
-  (load-theme 'modus-vivendi t))
-
-(use-package solarized-theme
-  :ensure t
-  :if (is-gui-p)
-  :config
-  (when custom-enabled-themes
-    (mapc #'disable-theme custom-enabled-themes))
-  (load-theme 'solarized-dark t))
+(add-to-list 'custom-theme-load-path "~/.emacs.d/site-lisp/everforest-emacs/")
+(load-theme 'everforest-hard-dark t)
 
 ;;;; Completion
 
@@ -277,8 +265,8 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   :custom
   (corfu-cycle t)
   (corfu-auto t)
-  (corfu-auto-delay 0.05)
-  (corfu-auto-prefix 2)
+  (corfu-auto-delay 0.02)
+  (corfu-auto-prefix 1)
   :init
   (global-corfu-mode 1)
   (corfu-popupinfo-mode 1)
@@ -488,54 +476,21 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   (defvar my/org-startup-prettified nil
     "Prettify org entites when non-nil.")
 
-  (add-to-list 'org-startup-options '("prettify"   my/org-startup-prettified t))
-
-                                        ; utilities to import org-clock data from mobile phone
-  (defun my/org-import-mobile-time-log ()
-    "Parse mobile time log and add entries to a target Org file."
-    (interactive)
-    (let* ((target-org-file (expand-file-name "~/org/mobile.org")) ; Or your main agenda file
-           (log-content (current-kill 0))
-           (lines (when log-content (split-string log-content "\n" t))))
-      (if (not lines)
-          (message "No available information in system clipboard")
-        (with-current-buffer (find-file-noselect target-org-file)
-          (dolist (line lines)
-            (when (string-match "\\[\\(.*\\)\\]--\\[\\(.*\\)\\] | \\[\\(.*\\)\\]" line)
-              (let* ((start-time-str (match-string 1 line))
-                     (end-time-str (match-string 2 line))
-                     (task-name (match-string 3 line))
-                     (org-start-time (format-time-string "[%Y-%m-%d %a %H:%M]" (org-time-string-to-seconds start-time-str)))
-                     (org-end-time (format-time-string "[%Y-%m-%d %a %H:%M]" (org-time-string-to-seconds end-time-str))))
-                (message "heading: %s" task-name)
-                ;; Find or create the heading
-                (goto-char (point-min))
-                (let ((heading-found (search-forward (concat "* " task-name) nil t)))
-                  (unless heading-found
-                    (goto-char (point-max))
-                    (insert (format "\n* %s\n:LOGBOOK:\n:END:" task-name))))
-                ;; For now, we'll just put all clocks under the top-level heading
-                ;; A more complex version could create sub-headings.
-                (goto-char (point-min))
-                (search-forward (concat "* " task-name))
-                (search-forward ":END:")
-                (previous-line 1)
-                (end-of-line)
-                (insert (format "\nCLOCK: %s--%s" org-start-time org-end-time))
-                (message (format "Logged: %s" (match-string 3 line))))))
-          (save-buffer)))
-      (message "Mobile log import complete.")))
-  )
+  (add-to-list 'org-startup-options '("prettify"   my/org-startup-prettified t)))
 
 
 (use-package org-download
   :ensure t
   :after org
+  :custom
+  (org-download-method 'directory)
+  (org-download-image-dir "images")
+  (org-download-heading-lvl nil)
+  (org-download-timestamp "%Y%m%d-%H%M%S")
+  (org-download-screenshot-method "pngpaste %s")
   :general
   (general-def :keymaps 'org-mode-map
-    "C-c p p" 'org-download-clipboard)
-  :init
-  (setq org-download-method 'directory))
+    "C-c p p" 'org-download-clipboard))
 
 (use-package org-modern
   :ensure t
@@ -546,10 +501,6 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
 
 
 ;;;; Reference managing
-
-(use-package biblio
-  :ensure t)
-
 (use-package ebib
   :ensure t
   :custom
@@ -708,12 +659,15 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
 (use-package conf-mode
   :mode ("\\.skhdrc\\'" . conf-mode))
 
-;; eglot
+;; lsp
 (use-package eglot
   :hook
   (lua-ts-mode . eglot-ensure)
   (rust-ts-mode . eglot-ensure)
   (haskell-ts-mode . eglot-ensure))
+
+(use-package eldoc-box
+  :ensure t)
 
 ;;;; Misc
 
@@ -768,7 +722,10 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   (projectile-mode 1))
 
 (use-package copilot
-  :ensure t)
+  :ensure t
+  :config
+  (general-def :keymaps 'copilot-completion-map
+    "TAB" 'copilot-accept-completion))
 
 (use-package gptel
   :ensure t
@@ -792,25 +749,6 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   :custom
   (nerd-icons-font-family "Symbols Nerd Font"))
 
-(use-package neotree
-  :ensure t
-  :hook
-  (neo-after-create . (lambda (&rest _)
-			(setq truncate-lines t)
-			(setq word-wrap nil)))
-  :init
-  (defun my/neotree-find-project-root ()
-    (interactive)
-    (let ((buffer (current-buffer)))
-      (neotree-find (projectile-project-root))
-      (set-buffer buffer)))
-  :general
-  (general-def :states 'normal "SPC TAB" 'neotree-toggle)
-  (general-def [f8] 'neotree-toggle))
-:config
-(setq neo-theme (if (display-graphic-p) 'nerd-icons 'arrow))
-(setq neo-window-fixed-size nil)
-
 (use-package avy
   :ensure t
   :general
@@ -828,8 +766,38 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   :ensure t
   :after (flycheck ledger-mode))
 
-;; custom
+(use-package elfeed
+  :ensure t)
+
+(use-package gt
+  :ensure (:type git :repo "https://github.com/lorniu/gt.el.git")
+  :custom
+  (gt-langs '(en zh))
+  (gt-default-translator (gt-translator :engines (gt-google-engine))))
+
+;;;; Email config
+
+(setq user-full-name "Yuetian Wu")
+(setq user-mail-address "ytwu@posteo.net")
+(setq message-kill-buffer-on-exit t)
+
+(setq message-send-mail-function 'sendmail-send-it)
+(setq sendmail-program "/opt/homebrew/bin/msmtp") ;; Adjust this if msmtp is elsewhere
+(setq mail-specify-envelope-from t)
+(setq mail-envelope-from 'header) ;; Use From: header for envelope-from
+
+(use-package mu4e
+  :load-path "/opt/homebrew/Cellar/mu/1.12.12/share/emacs/site-lisp/mu/mu4e/"
+  :custom
+  (mu4e-mu-binary "/opt/homebrew/bin/mu")
+  (mail-user-agent 'mu4e-user-agent)
+  :general
+  (general-def :states 'normal
+    "SPC m o" 'mu4e))
+
+;;;; custom
 (setq custom-file (concat user-emacs-directory "custom.el"))
 (load-file custom-file)
+
 
 ;;; init.el ends here

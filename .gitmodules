@@ -1,0 +1,3 @@
+[submodule "site-lisp/everforest-emacs"]
+	path = site-lisp/everforest-emacs
+	url = https://github.com/Theory-of-Everything/everforest-emacs.git
