@@ -266,7 +266,7 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   (corfu-cycle t)
   (corfu-auto t)
   (corfu-auto-delay 0.02)
-  (corfu-auto-prefix 1)
+  (corfu-auto-prefix 2)
   :init
   (global-corfu-mode 1)
   (corfu-popupinfo-mode 1)
@@ -774,26 +774,6 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   :custom
   (gt-langs '(en zh))
   (gt-default-translator (gt-translator :engines (gt-google-engine))))
-
-;;;; Email config
-
-(setq user-full-name "Yuetian Wu")
-(setq user-mail-address "ytwu@posteo.net")
-(setq message-kill-buffer-on-exit t)
-
-(setq message-send-mail-function 'sendmail-send-it)
-(setq sendmail-program "/opt/homebrew/bin/msmtp") ;; Adjust this if msmtp is elsewhere
-(setq mail-specify-envelope-from t)
-(setq mail-envelope-from 'header) ;; Use From: header for envelope-from
-
-(use-package mu4e
-  :load-path "/opt/homebrew/Cellar/mu/1.12.12/share/emacs/site-lisp/mu/mu4e/"
-  :custom
-  (mu4e-mu-binary "/opt/homebrew/bin/mu")
-  (mail-user-agent 'mu4e-user-agent)
-  :general
-  (general-def :states 'normal
-    "SPC m o" 'mu4e))
 
 ;;;; custom
 (setq custom-file (concat user-emacs-directory "custom.el"))
