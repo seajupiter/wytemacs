@@ -141,6 +141,8 @@
 
 (use-package undo-tree
   :ensure t
+  :custom
+  (undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo-tree")))
   :config
   (global-undo-tree-mode))
 
