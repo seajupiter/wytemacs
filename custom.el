@@ -4,6 +4,7 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
+ '(LaTeX-math-list '((63 "bot" "" nil)))
  '(elfeed-feeds
    '("https://feeds.bbci.co.uk/news/world/rss.xml"
      "https://hnrss.org/newest?comments=250"
@@ -22,6 +23,7 @@
 	    "tag:qq and tag:inbox and not tag:deleted" :key [113])
      (:name "posteo inbox" :query
 	    "tag:posteo and tag:inbox and not tag:deleted" :key [112])))
+ '(org-preview-latex-default-process 'dvisvgm nil nil "Customized with use-package org")
  '(smtpmail-smtp-server "smtp.qq.com")
  '(smtpmail-smtp-service 25))
 (custom-set-faces

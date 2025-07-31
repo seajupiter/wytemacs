@@ -101,6 +101,7 @@
 (setq default-buffer-file-coding-system 'utf-8)
 (fset 'yes-or-no-p 'y-or-n-p)            ; y/n instead of yes/no
 (electric-pair-mode 1)                  ; Auto-pair delimiters
+(add-hook 'minibuffer-setup-hook (lambda () (electric-pair-local-mode -1)))
 (recentf-mode 1)                        ; Keep track of recent files
 (set-face-attribute 'default nil :family "IBM Plex Mono" :height 150)
 (set-face-attribute 'variable-pitch nil :family "IBM Plex Sans" :height 150)
@@ -170,6 +171,7 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   (evil-want-C-u-scroll nil)
   (evil-cross-lines t)
   :config
+  (evil-set-leader nil (kbd ",") t)
   (defun my/evil-shift-left-visual ()
     (interactive)
     (evil-shift-left (region-beginning) (region-end))
@@ -303,6 +305,44 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
 
 ;;;; Tex
 
+(defun my/smart-insert-latex-macro ()
+  "Insert a TeX macro or LaTeX math symbol interactively.
+For TeX macros, only mandatory arguments are prompted.
+For LaTeX math symbols, insert them directly."
+  (interactive)
+  (let* ((tex-symbols (mapcar (lambda (sym)
+                                (cons (concat "macro: " (car sym)) (car sym)))
+                              (TeX-symbol-list)))
+         ;; Fix for LaTeX-math-list format
+         (math-symbols (delq nil
+                             (mapcar (lambda (item)
+                                       (when (and (listp item) (stringp (cadr item)))
+                                         (cons (concat "math: " (cadr item)) item)))
+                                     (append LaTeX-math-list LaTeX-math-default ))))
+         (all-symbols (append tex-symbols math-symbols))
+         (completion-extra-properties
+          (list :annotation-function
+                (lambda (s)
+                  (if (string-prefix-p "macro: " s)
+                      " [TeX macro]"
+                    " [Math symbol]"))))
+         (choice (completing-read "TeX macro or math symbol: " all-symbols nil t))
+         (entry (cdr (assoc choice all-symbols))))
+    
+    (cond
+     ;; Handle TeX macro
+     ((string-prefix-p "macro: " choice)
+      (let ((current-prefix-arg '(4))) ; Set prefix arg (C-u)
+        (TeX-insert-macro entry)))
+     
+     ;; Handle LaTeX math symbol
+     (t
+      ;; Format is different - item is a list with format (key type symbol ...)
+      (let ((symbol (nth 1 entry)))
+        (cond ((stringp symbol)
+               (insert (format "\\%s" symbol)))
+              (t (message "Unknown symbol format: %S" symbol))))))))
+
 (use-package auctex
   :ensure t
   :hook
@@ -325,11 +365,15 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   (preview-locating-previews-message nil)
   (preview-protect-point t)
   (preview-leave-open-previews-visible t)
-  :general-config
-  (general-def :keymaps 'LaTeX-mode-map
-    "s-B" 'TeX-command-run-all)
   :config
-  (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer))
+  (general-def :keymaps 'LaTeX-mode-map
+    "s-b" 'TeX-command-run-all
+    "\\" 'my/smart-insert-latex-macro)
+  (general-def :states 'normal :keymaps 'LaTeX-mode-map
+    ", l l" 'TeX-command-run-all
+    ", l v" 'TeX-view)
+  (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
+  (add-hook 'LaTeX-mode-hook #'LaTeX-math-mode))
 
 (use-package flymake
   :ensure t
@@ -348,10 +392,10 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   :ensure t
   :after (yasnippet)
   :hook (LaTeX-mode . turn-on-cdlatex)
-  :general-config
-  (general-def :keymaps 'cdlatex-mode-map
-    "<tab>" 'cdlatex-tab)
   :config
+  (general-def :keymaps 'cdlatex-mode-map
+    "<tab>" 'cdlatex-tab
+    "`" nil)
   (defun cdlatex-in-yas-field ()
     (when-let* ((_ (overlayp yas--active-field-overlay))
                 (end (overlay-end yas--active-field-overlay)))
@@ -545,7 +589,6 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   :demand t
   :init
   (setq yas-triggers-in-field t)
-  (setq yas-snippet-dirs (list (concat user-emacs-directory "snippets")))
   :config
   (yas-global-mode 1))
 
