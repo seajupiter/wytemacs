@@ -8,8 +8,6 @@
 
 ;;; Code:
 
-(setq user-emacs-directory (expand-file-name "~/.cache/emacs/"))
-
 ;;;; Bootstrap elpaca package manager
 
 (defvar elpaca-installer-version 0.11)
@@ -251,6 +249,7 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
 
 (use-package everforest
   :ensure (:type git :repo "https://github.com/seajupiter/everforest-emacs.git")
+  ;; :load-path "~/Repository/everforest-emacs/"
   :config
   (load-theme 'everforest-hard-dark t))
 
@@ -335,8 +334,12 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   (preview-protect-point t)
   (preview-leave-open-previews-visible t)
   :config
-  (defvar-local latex-symbol-history nil
-    "Buffer-local history of previously used TeX macros and LaTeX math symbols.")
+  (defvar latex-symbol-history nil
+    "History of previously used TeX macros and LaTeX math symbols.")
+  
+  ;; Add to savehist for persistence across sessions
+  (add-to-list 'savehist-additional-variables 'latex-symbol-history)
+  
   (defun my/smart-insert-latex-macro ()
     "Insert a TeX macro or LaTeX math symbol interactively.
 For TeX macros, only mandatory arguments are prompted.
@@ -344,42 +347,54 @@ For LaTeX math symbols, insert them directly."
     (interactive)
     (let* ((tex-symbols (mapcar (lambda (sym)
                                   (cons (concat "macro: " (car sym)) (car sym)))
-				(TeX-symbol-list)))
+                                (TeX-symbol-list)))
            (math-symbols (delq nil
                                (mapcar (lambda (item)
-					 (when (and (listp item) (stringp (cadr item)))
+                                         (when (and (listp item) (stringp (cadr item)))
                                            (cons (concat "math: " (cadr item)) item)))
                                        (append LaTeX-math-list LaTeX-math-default))))
            (all-symbols (append tex-symbols math-symbols))
-           (all-symbols-with-history
-            (append (delq nil (mapcar (lambda (h) (assoc h all-symbols))
-                                      latex-symbol-history))
-                    (seq-filter (lambda (item) (not (member (car item) latex-symbol-history)))
-				all-symbols)))
+           ;; Put history items first, then remaining items
+           (history-items (delq nil (mapcar (lambda (h) 
+                                              (assoc h all-symbols))
+                                            latex-symbol-history)))
+           (remaining-items (seq-filter (lambda (item) 
+                                          (not (member (car item) latex-symbol-history)))
+                                        all-symbols))
+           (all-symbols-with-history (append history-items remaining-items))
            (completion-extra-properties
             (list :annotation-function
                   (lambda (s)
-                    (if (string-prefix-p "macro: " s)
-			" [TeX macro]"
-                      " [Math symbol]"))))
-           (choice (completing-read "TeX macro or math symbol: " all-symbols-with-history
+                    (cond
+                     ((string-prefix-p "macro: " s) " [TeX macro]")
+                     ((member s latex-symbol-history) " [Recent]")
+                     (t " [Math symbol]")))))
+           (choice (completing-read "TeX macro or math symbol: " 
+                                    all-symbols-with-history
                                     nil t nil 'latex-symbol-history))
            (entry (cdr (assoc choice all-symbols-with-history))))
 
       (when choice
-	(cond
-	 ;; Handle TeX macro
-	 ((string-prefix-p "macro: " choice)
+        ;; Add to history (remove if exists, then add to front)
+        (setq latex-symbol-history 
+              (cons choice (delete choice latex-symbol-history)))
+        ;; Keep history reasonable size
+        (when (> (length latex-symbol-history) 20)
+          (setq latex-symbol-history (butlast latex-symbol-history)))
+        
+        (cond
+         ;; Handle TeX macro
+         ((string-prefix-p "macro: " choice)
           (let ((current-prefix-arg '(4))) ; Set prefix arg (C-u) to insert only mandatory args
             (TeX-insert-macro entry)))
 
-	 ;; Handle LaTeX math symbol
-	 (t
+         ;; Handle LaTeX math symbol
+         (t
           ;; entry is a list with format (key type symbol ...)
           (let ((symbol (nth 1 entry)))
             (cond ((stringp symbol)
                    (insert (format "\\%s" symbol)))
-                  (t (message "Unknown symbol format: %S" symbol)))))))))
+                  (t (message "Unknown symbol format: %S" symbol))))))))
   (general-def :keymaps 'LaTeX-mode-map
     "s-b" 'TeX-command-run-all
     "\\" 'my/smart-insert-latex-macro)
@@ -387,7 +402,7 @@ For LaTeX math symbols, insert them directly."
     ", l l" 'TeX-command-run-all
     ", l v" 'TeX-view)
   (add-hook 'TeX-after-compilation-finished-functions #'TeX-revert-document-buffer)
-  (add-hook 'LaTeX-mode-hook #'LaTeX-math-mode))
+  (add-hook 'LaTeX-mode-hook #'LaTeX-math-mode)))
 
 (use-package flymake
   :ensure t
