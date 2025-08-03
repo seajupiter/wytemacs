@@ -8,6 +8,8 @@
 
 ;;; Code:
 
+(setq user-emacs-directory (expand-file-name "~/.cache/emacs/"))
+
 ;;;; Bootstrap elpaca package manager
 
 (defvar elpaca-installer-version 0.11)
@@ -107,6 +109,9 @@
 (set-face-attribute 'variable-pitch nil :family "IBM Plex Sans" :height 150)
 (set-fontset-font t 'han "Pingfang SC")
 (setq display-line-numbers-type 'relative)
+(make-directory (expand-file-name "tmp/auto-saves/" user-emacs-directory) t)
+(setq auto-save-list-file-prefix (expand-file-name "tmp/auto-saves/sessions/" user-emacs-directory)
+      auto-save-file-name-transforms `((".*" ,(expand-file-name "tmp/auto-saves/" user-emacs-directory) t)))
 
 ;; on macos, fix "This Emacs binary lacks sound support" 
 ;; - https://github.com/leoliu/play-sound-osx/blob/master/play-sound.el
@@ -143,7 +148,7 @@
 (use-package undo-tree
   :ensure t
   :custom
-  (undo-tree-history-directory-alist '(("." . "~/.emacs.d/undo-tree")))
+  (undo-tree-history-directory-alist `(("." . ,(expand-file-name "undo-tree" user-emacs-directory))))
   :config
   (global-undo-tree-mode))
 
@@ -217,11 +222,11 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
   :config
   (setq-default evil-escape-key-sequence "jk")
   (setq evil-escape-inhibit-functions '((lambda () (interactive)
-					(or (evil-visual-state-p)
-					    (evil-motion-state-p)
-					    (derived-mode-p 'magit-mode)
-					    (derived-mode-p 'ibuffer-mode)
-					    (derived-mode-p 'treemacs-mode)))))
+					  (or (evil-visual-state-p)
+					      (evil-motion-state-p)
+					      (derived-mode-p 'magit-mode)
+					      (derived-mode-p 'ibuffer-mode)
+					      (derived-mode-p 'treemacs-mode)))))
   (evil-escape-mode))
 
 (use-package evil-collection
@@ -244,8 +249,10 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
 
 ;;;; Themes
 
-(add-to-list 'custom-theme-load-path "~/.emacs.d/site-lisp/everforest-emacs/")
-(load-theme 'everforest-hard-dark t)
+(use-package everforest
+  :ensure (:type git :repo "https://github.com/seajupiter/everforest-emacs.git")
+  :config
+  (load-theme 'everforest-hard-dark t))
 
 ;;;; Completion
 
@@ -305,44 +312,6 @@ If DIRECTION is 'up, scroll up; if 'down, scroll down."
 
 ;;;; Tex
 
-(defun my/smart-insert-latex-macro ()
-  "Insert a TeX macro or LaTeX math symbol interactively.
-For TeX macros, only mandatory arguments are prompted.
-For LaTeX math symbols, insert them directly."
-  (interactive)
-  (let* ((tex-symbols (mapcar (lambda (sym)
-                                (cons (concat "macro: " (car sym)) (car sym)))
-                              (TeX-symbol-list)))
-         ;; Fix for LaTeX-math-list format
-         (math-symbols (delq nil
-                             (mapcar (lambda (item)
-                                       (when (and (listp item) (stringp (cadr item)))
-                                         (cons (concat "math: " (cadr item)) item)))
-                                     (append LaTeX-math-list LaTeX-math-default ))))
-         (all-symbols (append tex-symbols math-symbols))
-         (completion-extra-properties
-          (list :annotation-function
-                (lambda (s)
-                  (if (string-prefix-p "macro: " s)
-                      " [TeX macro]"
-                    " [Math symbol]"))))
-         (choice (completing-read "TeX macro or math symbol: " all-symbols nil t))
-         (entry (cdr (assoc choice all-symbols))))
-    
-    (cond
-     ;; Handle TeX macro
-     ((string-prefix-p "macro: " choice)
-      (let ((current-prefix-arg '(4))) ; Set prefix arg (C-u)
-        (TeX-insert-macro entry)))
-     
-     ;; Handle LaTeX math symbol
-     (t
-      ;; Format is different - item is a list with format (key type symbol ...)
-      (let ((symbol (nth 1 entry)))
-        (cond ((stringp symbol)
-               (insert (format "\\%s" symbol)))
-              (t (message "Unknown symbol format: %S" symbol))))))))
-
 (use-package auctex
   :ensure t
   :hook
@@ -366,6 +335,51 @@ For LaTeX math symbols, insert them directly."
   (preview-protect-point t)
   (preview-leave-open-previews-visible t)
   :config
+  (defvar-local latex-symbol-history nil
+    "Buffer-local history of previously used TeX macros and LaTeX math symbols.")
+  (defun my/smart-insert-latex-macro ()
+    "Insert a TeX macro or LaTeX math symbol interactively.
+For TeX macros, only mandatory arguments are prompted.
+For LaTeX math symbols, insert them directly."
+    (interactive)
+    (let* ((tex-symbols (mapcar (lambda (sym)
+                                  (cons (concat "macro: " (car sym)) (car sym)))
+				(TeX-symbol-list)))
+           (math-symbols (delq nil
+                               (mapcar (lambda (item)
+					 (when (and (listp item) (stringp (cadr item)))
+                                           (cons (concat "math: " (cadr item)) item)))
+                                       (append LaTeX-math-list LaTeX-math-default))))
+           (all-symbols (append tex-symbols math-symbols))
+           (all-symbols-with-history
+            (append (delq nil (mapcar (lambda (h) (assoc h all-symbols))
+                                      latex-symbol-history))
+                    (seq-filter (lambda (item) (not (member (car item) latex-symbol-history)))
+				all-symbols)))
+           (completion-extra-properties
+            (list :annotation-function
+                  (lambda (s)
+                    (if (string-prefix-p "macro: " s)
+			" [TeX macro]"
+                      " [Math symbol]"))))
+           (choice (completing-read "TeX macro or math symbol: " all-symbols-with-history
+                                    nil t nil 'latex-symbol-history))
+           (entry (cdr (assoc choice all-symbols-with-history))))
+
+      (when choice
+	(cond
+	 ;; Handle TeX macro
+	 ((string-prefix-p "macro: " choice)
+          (let ((current-prefix-arg '(4))) ; Set prefix arg (C-u) to insert only mandatory args
+            (TeX-insert-macro entry)))
+
+	 ;; Handle LaTeX math symbol
+	 (t
+          ;; entry is a list with format (key type symbol ...)
+          (let ((symbol (nth 1 entry)))
+            (cond ((stringp symbol)
+                   (insert (format "\\%s" symbol)))
+                  (t (message "Unknown symbol format: %S" symbol)))))))))
   (general-def :keymaps 'LaTeX-mode-map
     "s-b" 'TeX-command-run-all
     "\\" 'my/smart-insert-latex-macro)
@@ -555,29 +569,29 @@ For LaTeX math symbols, insert them directly."
   (ebib-index-window-size 45)
   (ebib-file-associations '(("pdf" . "open") ("ps" . "open")))
   (ebib-citation-commands '((LaTeX-mode
-			      (("cite" "\\cite%<[%A]%>[%A]{%(%K%,)}")
-			       ("paren" "\\parencite%<[%A]%>[%A]{%(%K%,)}")
-			       ("foot" "\\footcite%<[%A]%>[%A]{%(%K%,)}")
-			       ("text" "\\textcite%<[%A]%>[%A]{%(%K%,)}")
-			       ("smart" "\\smartcite%<[%A]%>[%A]{%(%K%,)}")
-			       ("super" "\\supercite{%K}")
-			       ("auto" "\\autocite%<[%A]%>[%A]{%(%K%,)}")
-			       ("cites" "\\cites%<(%A)%>(%A)%(%<[%A]%>[%A]{%K}%)")
-			       ("parens" "\\parencites%<(%A)%>(%A)%(%<[%A]%>[%A]{%K}%)")
-			       ("foots" "\\footcites%<(%A)%>(%A)%(%<[%A]%>[%A]{%K}%)")
-			       ("texts" "\\textcites%<(%A)%>(%A)%(%<[%A]%>[%A]{%K}%)")
-			       ("smarts" "\\smartcites%<(%A)%>(%A)%(%<[%A]%>[%A]{%K}%)")
-			       ("supers" "\\supercites%<(%A)%>(%A)%(%<[%A]%>[%A]{%K}%)")
-			       ("autos" "\\autoscites%<(%A)%>(%A)%(%<[%A]%>[%A]{%K}%)")
-			       ("author" "\\citeauthor%<[%A]%>[%A]{%(%K%,)}")
-			       ("title" "\\citetitle%<[%A]%>[%A]{%(%K%,)}")
-			       ("year" "\\citeyear%<[%A]%>[%A][%A]{%K}")
-			       ("date" "\\citedate%<[%A]%>[%A]{%(%K%,)}")
-			       ("full" "\\fullcite%<[%A]%>[%A]{%(%K%,)}")))
-			     (org-mode (("ebib" "[[ebib:%K][%D]]")))
-			     (markdown-mode
-			      (("text" "@%K%< [%A]%>") ("paren" "[%(%<%A %>@%K%<, %A%>%; )]")
-			       ("year" "[-@%K%< %A%>]")))))
+			     (("cite" "\\cite%<[%A]%>[%A]{%(%K%,)}")
+			      ("paren" "\\parencite%<[%A]%>[%A]{%(%K%,)}")
+			      ("foot" "\\footcite%<[%A]%>[%A]{%(%K%,)}")
+			      ("text" "\\textcite%<[%A]%>[%A]{%(%K%,)}")
+			      ("smart" "\\smartcite%<[%A]%>[%A]{%(%K%,)}")
+			      ("super" "\\supercite{%K}")
+			      ("auto" "\\autocite%<[%A]%>[%A]{%(%K%,)}")
+			      ("cites" "\\cites%<(%A)%>(%A)%(%<[%A]%>[%A]{%K}%)")
+			      ("parens" "\\parencites%<(%A)%>(%A)%(%<[%A]%>[%A]{%K}%)")
+			      ("foots" "\\footcites%<(%A)%>(%A)%(%<[%A]%>[%A]{%K}%)")
+			      ("texts" "\\textcites%<(%A)%>(%A)%(%<[%A]%>[%A]{%K}%)")
+			      ("smarts" "\\smartcites%<(%A)%>(%A)%(%<[%A]%>[%A]{%K}%)")
+			      ("supers" "\\supercites%<(%A)%>(%A)%(%<[%A]%>[%A]{%K}%)")
+			      ("autos" "\\autoscites%<(%A)%>(%A)%(%<[%A]%>[%A]{%K}%)")
+			      ("author" "\\citeauthor%<[%A]%>[%A]{%(%K%,)}")
+			      ("title" "\\citetitle%<[%A]%>[%A]{%(%K%,)}")
+			      ("year" "\\citeyear%<[%A]%>[%A][%A]{%K}")
+			      ("date" "\\citedate%<[%A]%>[%A]{%(%K%,)}")
+			      ("full" "\\fullcite%<[%A]%>[%A]{%(%K%,)}")))
+			    (org-mode (("ebib" "[[ebib:%K][%D]]")))
+			    (markdown-mode
+			     (("text" "@%K%< [%A]%>") ("paren" "[%(%<%A %>@%K%<, %A%>%; )]")
+			      ("year" "[-@%K%< %A%>]")))))
   :config
   (general-def :keymaps 'LaTeX-mode-map
     "C-c b" 'ebib-insert-citation))
@@ -605,25 +619,25 @@ For LaTeX math symbols, insert them directly."
          (org-mode . laas-mode))
   :config
   (aas-set-snippets 'laas-mode
-		    "mk" (lambda () (interactive) (yas-expand-snippet "\\$$1\\$$0"))
-		    "dm" (lambda () (interactive) (yas-expand-snippet "\\[\n  $1\n\\]\n$0"))
-		    :cond #'texmathp
-		    "supp" "\\supp"
-		    "On" "O(n)"
-		    "O1" "O(1)"
-		    "Olog" "O(\\log n)"
-		    "Olon" "O(n \\log n)"
-		    "max" nil
-		    "Sum" (lambda () (interactive) (yas-expand-snippet "\\sum_{$1}^{$2} $0"))
-		    "Span" (lambda () (interactive) (yas-expand-snippet "\\Span($1)$0"))
-		    "sq" (lambda () (interactive) (yas-expand-snippet "\\sqrt{$1}$0"))
-		    "norm" (lambda() (interactive) (yas-expand-snippet "\\left\\lVert $1 \\right\\rVert"))
-		    "ZZ" (lambda () (interactive) (yas-expand-snippet "\\mathbb{Z}$0"))
-		    "ooo" (lambda () (interactive) (yas-expand-snippet "\\infty"))
-		    "xx" (lambda () (interactive) (yas-expand-snippet "\\times"))
-		    :cond #'laas-object-on-left-condition
-		    "qq" (lambda () (interactive) (laas-wrap-previous-object "sqrt"))
-		    ",." (lambda () (interactive) (laas-wrap-previous-object "boldsymbol"))))
+    "mk" (lambda () (interactive) (yas-expand-snippet "\\$$1\\$$0"))
+    "dm" (lambda () (interactive) (yas-expand-snippet "\\[\n  $1\n\\]\n$0"))
+    :cond #'texmathp
+    "supp" "\\supp"
+    "On" "O(n)"
+    "O1" "O(1)"
+    "Olog" "O(\\log n)"
+    "Olon" "O(n \\log n)"
+    "max" nil
+    "Sum" (lambda () (interactive) (yas-expand-snippet "\\sum_{$1}^{$2} $0"))
+    "Span" (lambda () (interactive) (yas-expand-snippet "\\Span($1)$0"))
+    "sq" (lambda () (interactive) (yas-expand-snippet "\\sqrt{$1}$0"))
+    "norm" (lambda() (interactive) (yas-expand-snippet "\\left\\lVert $1 \\right\\rVert"))
+    "ZZ" (lambda () (interactive) (yas-expand-snippet "\\mathbb{Z}$0"))
+    "ooo" (lambda () (interactive) (yas-expand-snippet "\\infty"))
+    "xx" (lambda () (interactive) (yas-expand-snippet "\\times"))
+    :cond #'laas-object-on-left-condition
+    "qq" (lambda () (interactive) (laas-wrap-previous-object "sqrt"))
+    ",." (lambda () (interactive) (laas-wrap-previous-object "boldsymbol"))))
 
 
 ;;;; ProgLang
@@ -759,7 +773,8 @@ For LaTeX math symbols, insert them directly."
     "SPC /" 'consult-ripgrep
     "SPC f t" 'consult-theme
     "SPC ," 'consult-buffer
-    "SPC f r" 'consult-recent-file))
+    "SPC f r" 'consult-recent-file
+    "SPC f i" 'consult-imenu))
 
 (use-package projectile
   :ensure t
