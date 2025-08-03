@@ -1,5 +1,5 @@
 ;;; init.el --- Emacs configuration entry point -*- lexical-binding: t; -*-
-;; Author: Yuetian Wu <yuetian-wu@outlook.com>
+;; Author: Yuetian Wu <ytwu@posteo.net>
 ;; Created: 2025-07-04
 
 ;; Commentary:
@@ -149,6 +149,17 @@
   (undo-tree-history-directory-alist `(("." . ,(expand-file-name "undo-tree" user-emacs-directory))))
   :config
   (global-undo-tree-mode))
+
+;; Configure outline-minor-mode for navigation
+(use-package outline
+  :ensure nil  ; built-in package
+  :hook ((emacs-lisp-mode . outline-minor-mode)
+         (lisp-interaction-mode . outline-minor-mode))
+  :config
+  ;; Set up outline heading regexp for Emacs Lisp comments
+  (setq-default outline-regexp ";;;\\(;+\\| \\)")
+  ;; Show all headings by default
+  (add-hook 'outline-minor-mode-hook 'outline-show-all))
 
 ;;;; Keymap 
 
@@ -693,19 +704,6 @@ For LaTeX math symbols, insert them directly."
   :init
   (setq markdown-command "pandoc"))
 
-;; elisp 
-(use-package elisp-mode
-  :hook
-  (emacs-lisp-mode . (lambda ()
-		       (outline-minor-mode)
-		       (define-key outline-minor-mode-map (kbd "C-c C-n") 'outline-next-visible-heading)
-		       (define-key outline-minor-mode-map (kbd "C-c C-p") 'outline-previous-visible-heading)
-		       (define-key outline-minor-mode-map (kbd "C-c C-f") 'outline-forward-same-level)
-		       (define-key outline-minor-mode-map (kbd "C-c C-b") 'outline-backward-same-level)
-		       (define-key outline-minor-mode-map (kbd "C-c C-u") 'outline-up-heading)
-		       (define-key outline-minor-mode-map (kbd "C-c C-t") 'outline-toggle-children))))
-
-
 ;; lua
 (use-package lua-ts-mode
   :mode ("\\.lua\\'" . lua-ts-mode))
@@ -789,7 +787,8 @@ For LaTeX math symbols, insert them directly."
     "SPC f t" 'consult-theme
     "SPC ," 'consult-buffer
     "SPC f r" 'consult-recent-file
-    "SPC f i" 'consult-imenu))
+    "SPC f i" 'consult-imenu
+    "SPC f o" 'consult-outline))
 
 (use-package projectile
   :ensure t
