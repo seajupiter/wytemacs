@@ -407,8 +407,7 @@ For LaTeX math symbols, insert them directly."
                    (insert (format "\\%s" symbol)))
                   (t (message "Unknown symbol format: %S" symbol))))))))
   (general-def :keymaps 'LaTeX-mode-map
-    "s-b" 'TeX-command-run-all
-    "\\" 'my/smart-insert-latex-macro)
+    "s-b" 'TeX-command-run-all)
   (general-def :states 'normal :keymaps 'LaTeX-mode-map
     ", l l" 'TeX-command-run-all
     ", l v" 'TeX-view)
